@@ -6,19 +6,17 @@
 - We only support Unicode. Don't support ANSI. Use WCHAR over TCHAR, LPWSTR over LPTSTR, L"" over TEXT("").
 - Do not run the apps. I will run them myself in the debugger for testing.
 - Never use the pImpl pattern.
-- Documentation available in `context/` and by codebase search:
-    - `context/libzip/` - libzip library documentation
 - If you get `error C3859: Failed to create virtual memory for PCH` or `error C1076: compiler limit: internal heap limit reached`, just run the build again. This is not a problem with your code.
 
 ## File Manager (winfile)
-- Codebase documentation: `context/winfile-overview.md`. Important: Keep this updated as you modify the codebase!
+- Codebase documentation: `doc/winfile-overview.md`. Important: Keep this updated as you modify the codebase!
 - Directory: `src/winfile/`
 - Always run the build with `bash src/build-winfile.sh` after making changes.
 - This is the classic Windows File Manager codebase.
 - When creating new source files, OMIT the file-level comment header.
 
 ## Program Manager (progman)
-- Codebase documentation: `context/program-overview.md`. Important: Keep this updated as you modify the codebase!
+- Codebase documentation: `doc/program-overview.md`. Important: Keep this updated as you modify the codebase!
 - Directories: `src/progman/`, `src/libprogman/`, `src/libprogman_tests`
 - Always run the build and tests with `bash src/build-progman.sh` after making changes.
 - Prefer the C++ Standard Library like std::wstring over old fashioned C like WCHAR* or LPWSTR.
