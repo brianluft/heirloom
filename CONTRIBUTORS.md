@@ -1,4 +1,5 @@
 # Getting started
+- Install [Git for Windows](https://gitforwindows.org/).
 - Install [Visual Studio 2022 Community](https://aka.ms/vs/17/release/vs_community.exe).
     - Workloads
         - "Desktop development with C++"
