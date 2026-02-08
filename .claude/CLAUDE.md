@@ -37,3 +37,6 @@
 - Use CancellationToken and OperationCanceledException [cancel.h](mdc:src/libheirloom/cancel.h) for cancellation; it works the same as in C#.
 - Use setWindowData/getWindowData in libprogman/ [window_data.h](mdc:src/libprogman/window_data.h) to associate a backing pointer with an HWND.
 - Define the WndProc as a `friend` of the backing class so it can call private methods.
+
+# Tool Instructions
+- `Bash`: Always use `/` forward slashes in paths, not `\` slashes.
