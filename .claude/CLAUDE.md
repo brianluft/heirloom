@@ -1,8 +1,3 @@
----
-description: 
-globs: 
-alwaysApply: true
----
 # Heirloom apps
 - This is two different apps: winfile and progman.
 - C++ 17
