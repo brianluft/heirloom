@@ -1,2 +1,0 @@
-- [x] To both progman and winfile, add a command to the Help menu: "Visit Website". It opens `https://heirloomapps.com` in the user's default browser.
-  - *🤖 Added ID_HELP_VISIT_WEBSITE to progman resources and IDM_VISIT_WEBSITE to winfile resources, updated both Help menus with "Visit &Website" menu items including separator, and implemented command handling in both ProgramManagerWindow.cpp and wfcomman.cpp using ShellExecuteW with "open" verb to launch the URL in the default browser.*
