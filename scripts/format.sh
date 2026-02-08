@@ -19,28 +19,8 @@ fi
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 cd ..
 
-# Check for non-UTF-8 text files.
-# It can be checked with: iconv -s -f UTF-8 $FILENAME > /dev/null
-# This will return a non-zero exit code if the file is not UTF-8.
-non_utf8_files=()
-while IFS= read -r file; do
-    if ! iconv -s -f UTF-8 "$file" > /dev/null 2>&1; then
-        non_utf8_files+=("$file")
-    fi
-done < <(find . -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.rc" -o -name "*.txt" -o -name "*.md" -o -name "*.mdc" -o -name "*.json" -o -name "*.vcxproj" -o -name "*.manifest" -o -name "*.sh" \) \
-    -not -path "*.git*" -not -path "*x64*" -not -path "*ARM64*")
-
-if [ ${#non_utf8_files[@]} -gt 0 ]; then
-    echo "Converting the following files to UTF-8 encoding:"
-    for file in "${non_utf8_files[@]}"; do
-        echo "  $file"
-        # Create a temporary file with UTF-8 encoding
-        iconv -f "$(file -bi "$file" | sed 's/.*charset=//')" -t UTF-8 "$file" > "${file}.tmp"
-        # Replace original file with UTF-8 version
-        mv "${file}.tmp" "$file"
-    done
-    echo "Conversion complete."
-fi
+# Check for non-UTF-8 text files and convert them to UTF-8.
+powershell.exe -ExecutionPolicy Bypass -File "scripts/Convert-ToUtf8.ps1" 
 
 # Change to src directory.
 cd src
