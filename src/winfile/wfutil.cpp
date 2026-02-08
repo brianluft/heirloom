@@ -515,9 +515,12 @@ int GetMDIWindowText(HWND hwnd, LPWSTR szTitle, int size) {
         iWindowNumber = 0;
     }
 
-    // The window title contains only the directory path (e.g., "C:\temp").
-    // Append "\*.*" to reconstruct the internal path that callers expect.
-    if (GetWindowLongPtr(hwnd, GWL_TYPE) != -1L) {
+    // After SetMDIWindowText, the window title contains only the directory
+    // path (e.g., "C:\temp").  Append "\*.*" to reconstruct the internal
+    // path that callers expect.  GWL_PATHLEN is non-zero once
+    // SetMDIWindowText has been called; before that the title still
+    // contains the original path with filespec, so we must not append.
+    if (GetWindowLongPtr(hwnd, GWL_TYPE) != -1L && GetWindowLongPtr(hwnd, GWL_PATHLEN) != 0) {
         AddBackslash(szTemp);
         lstrcat(szTemp, kStarDotStar);
     }
