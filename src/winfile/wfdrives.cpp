@@ -140,7 +140,6 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
     //
     dwNewSort = (DWORD)GetWindowLongPtr(hwndSrc, GWL_SORT);
     dwNewView = (DWORD)GetWindowLongPtr(hwndSrc, GWL_VIEW);
-    dwNewAttribs = (DWORD)GetWindowLongPtr(hwndSrc, GWL_ATTRIBS);
 
     hwnd = CreateTreeWindow(szDir, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, dxSplit);
 

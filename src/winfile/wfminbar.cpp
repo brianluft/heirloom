@@ -68,7 +68,7 @@ class WinfileMinimizedWindowList : public libheirloom::MinimizedWindowListContro
         }
 
         // Try to find the last path component
-        // Window titles are typically like "C:\Users\Foo\Bar\*.*"
+        // Window titles are typically like "C:\Users\Foo\Bar"
         size_t lastSlash = fullTitle.rfind(L'\\');
         if (lastSlash != std::wstring::npos && lastSlash > 0) {
             // Find the second-to-last slash for "parent\leaf" format

@@ -329,9 +329,6 @@ BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) 
         EnableMenuItem(hMenu, IDM_BYDATE, uMenuFlags);
         EnableMenuItem(hMenu, IDM_BYFDATE, uMenuFlags);
 
-        if (IsIconic(hwndActive))
-            uMenuFlags = MF_BYCOMMAND | MF_GRAYED;
-        EnableMenuItem(hMenu, IDM_VINCLUDE, uMenuFlags);
     } else if (popupName == L"&Options") {
         if (iReadLevel)
             uMenuFlags = MF_BYCOMMAND | MF_GRAYED;

@@ -231,8 +231,6 @@ BEGIN
     MENUITEM "Sort by Si&ze",   IDM_BYSIZE
     MENUITEM "Sort by &Date",   IDM_BYDATE
     MENUITEM "Sort &forward Date",   IDM_BYFDATE
-    MENUITEM    SEPARATOR
-    MENUITEM    "By File &Type...",     IDM_VINCLUDE
     END
     POPUP       "&Options"
     BEGIN
@@ -655,7 +653,6 @@ BEGIN
     MH_MYITEMS+IDM_BYSIZE,      "Sorts files by size"
     MH_MYITEMS+IDM_BYDATE,      "Sorts files by date"
     MH_MYITEMS+IDM_BYFDATE,     "Sorts files by forward date"
-    MH_MYITEMS+IDM_VINCLUDE,    "Shows files of a specified type"
 
     MH_MYITEMS+IDM_CONFIRM,     "Controls confirmation messages"
     MH_MYITEMS+IDM_FONT,        "Changes the Heirloom File Manager font"
@@ -983,24 +980,6 @@ BEGIN
     PUSHBUTTON      "Cancel",2,70,105,50,14
 END
 
-
-INCLUDEDLG DIALOGEX 20, 20, 207, 148
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "By File Type"
-FONT 9, "Segoe UI", 400, 0, 0x0
-BEGIN
-    CONTROL         "File&name pattern:",IDD_TEXT,"Static",SS_LEFTNOWORDWRAP,7,11,58,8
-    EDITTEXT        IDD_NAME,7,21,189,12,ES_AUTOHSCROLL
-    GROUPBOX        "Types",IDD_TEXT,7,42,70,77
-    CONTROL         "&Directories",IDD_DIR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,56,51,10
-    CONTROL         "&Programs",IDD_PROGRAMS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,70,47,10
-    CONTROL         "Docu&ments",IDD_DOCS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,84,54,10
-    CONTROL         "&Other files",IDD_OTHER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,98,51,10
-    CONTROL         "Show hidden/&system files",IDD_SHOWHIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,42,100,10
-    CONTROL         "Show &junction points",IDD_SHOWJUNCTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,56,85,10
-    DEFPUSHBUTTON   "OK",1,91,126,50,14
-    PUSHBUTTON      "Cancel",2,147,126,50,14
-END
 
 
 CONFIRMDLG DIALOGEX 20, 20, 193, 141

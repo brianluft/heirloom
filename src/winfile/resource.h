@@ -103,7 +103,6 @@
 #define IDM_BYDATE 407   // reverse date sort
 #define IDM_BYFDATE 408  // forward date sort
 
-#define IDM_VINCLUDE 409
 #define IDM_REPLACE 410
 
 #define IDM_TREEONLY 411

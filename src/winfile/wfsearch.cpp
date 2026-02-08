@@ -831,7 +831,6 @@ SearchWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             SetWindowLongPtr(hwnd, GWL_TYPE, TYPE_SEARCH);
             SetWindowLongPtr(hwnd, GWL_VIEW, dwNewView);
             SetWindowLongPtr(hwnd, GWL_SORT, IDD_NAME);
-            SetWindowLongPtr(hwnd, GWL_ATTRIBS, ATTR_DEFAULT);
             SetWindowLongPtr(hwnd, GWL_FSCFLAG, FALSE);
             SetWindowLongPtr(hwnd, GWL_HDTA, 0L);
             SetWindowLongPtr(hwnd, GWL_TABARRAY, (LPARAM)pwTabs);

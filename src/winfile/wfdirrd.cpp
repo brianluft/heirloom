@@ -46,7 +46,7 @@ CRITICAL_SECTION CriticalSectionDirRead;
 //
 DWORD WINAPI DirReadServer(LPVOID lpvParm);
 LPXDTALINK CreateDTABlockWorker(HWND hwnd, HWND hwndDir);
-LPXDTALINK StealDTABlock(HWND hwndCur, LPWSTR pPath, DWORD dwAttribs);
+LPXDTALINK StealDTABlock(HWND hwndCur, LPWSTR pPath);
 BOOL IsNetDir(LPWSTR pPath, LPWSTR pName);
 void DirReadAbort(HWND hwnd, LPXDTALINK lpStart, EDIRABORT eDirAbort);
 
@@ -124,13 +124,13 @@ void DestroyDirRead() {
 /////////////////////////////////////////////////////////////////////
 
 LPXDTALINK
-CreateDTABlock(HWND hwnd, LPWSTR pPath, DWORD dwAttribs, BOOL bDontSteal) {
+CreateDTABlock(HWND hwnd, LPWSTR pPath, BOOL bDontSteal) {
     LPXDTALINK lpStart;
     MSG msg;
 
     SetWindowLongPtr(hwnd, GWL_IERROR, ERROR_SUCCESS);
 
-    if (!bDontSteal && (lpStart = StealDTABlock(hwnd, pPath, dwAttribs))) {
+    if (!bDontSteal && (lpStart = StealDTABlock(hwnd, pPath))) {
         if (PeekMessage(&msg, NULL, WM_KEYDOWN, WM_KEYDOWN, PM_NOREMOVE)) {
             if (msg.wParam == VK_UP || msg.wParam == VK_DOWN) {
                 MemDelete(lpStart);
@@ -195,7 +195,7 @@ void DirReadAbort(HWND hwnd, LPXDTALINK lpStart, EDIRABORT eDirAbort) {
 /////////////////////////////////////////////////////////////////////
 
 LPXDTALINK
-StealDTABlock(HWND hwndCur, LPWSTR pPath, DWORD dwAttribs) {
+StealDTABlock(HWND hwndCur, LPWSTR pPath) {
     HWND hwndDir;
     HWND hwnd;
     WCHAR szPath[MAXPATHLEN];
@@ -207,8 +207,7 @@ StealDTABlock(HWND hwndCur, LPWSTR pPath, DWORD dwAttribs) {
         if ((hwndDir = HasDirWindow(hwnd)) && (hwndDir != hwndCur)) {
             GetMDIWindowText(hwnd, szPath, COUNTOF(szPath));
 
-            if ((dwAttribs == (DWORD)GetWindowLongPtr(hwnd, GWL_ATTRIBS)) && !lstrcmpi(pPath, szPath) &&
-                (lpStart = (LPXDTALINK)GetWindowLongPtr(hwndDir, GWL_HDTA))) {
+            if (!lstrcmpi(pPath, szPath) && (lpStart = (LPXDTALINK)GetWindowLongPtr(hwndDir, GWL_HDTA))) {
                 iError = (int)GetWindowLongPtr(hwndDir, GWL_IERROR);
                 if (!iError || IDS_NOFILES == iError) {
                     lpStartCopy = MemClone(lpStart);
@@ -567,7 +566,6 @@ CreateDTABlockWorker(HWND hwnd, HWND hwndDir) {
     WCHAR szPath[MAXPATHLEN];
     WCHAR szLinkDest[MAXPATHLEN];
 
-    DWORD dwAttribs;
     LPXDTALINK lpStart;
 
     int iError = 0;
@@ -589,8 +587,6 @@ CreateDTABlockWorker(HWND hwnd, HWND hwndDir) {
 
     LeaveCriticalSection(&CriticalSectionDirRead);
 
-    dwAttribs = (DWORD)GetWindowLongPtr(hwnd, GWL_ATTRIBS);
-
     //
     // get the drive index assuming path is
     // fully qualified...
@@ -602,7 +598,7 @@ CreateDTABlockWorker(HWND hwnd, HWND hwndDir) {
     lpLinkLast = lpStart;
 
 RestartOverFindFirst:
-    if (!WFFindFirst(&lfndta, szPath, dwAttribs & ATTR_ALL)) {
+    if (!WFFindFirst(&lfndta, szPath, ATTR_ALL)) {
         //
         // Try again!  But first, see if the directory was invalid!
         //
@@ -622,7 +618,7 @@ RestartOverFindFirst:
         // break out of this loop if we were returned something
         // other than PATHNOTFOUND
         //
-        if (!WFFindFirst(&lfndta, szPath, dwAttribs & ATTR_ALL)) {
+        if (!WFFindFirst(&lfndta, szPath, ATTR_ALL)) {
             switch (lfndta.err) {
                 case ERROR_PATH_NOT_FOUND:
                 case ERROR_CANT_ACCESS_FILE:
@@ -718,7 +714,7 @@ RestartOverFindFirst:
     //
     // Always show .. if this is not the root directory.
     //
-    if ((lpTemp - szPath > 3) && (dwAttribs & ATTR_DIR)) {
+    if (lpTemp - szPath > 3) {
         //
         // Add a DTA to the list.
         //
@@ -755,28 +751,11 @@ RestartOverFindFirst:
         //
         lfndta.fd.dwFileAttributes &= (ATTR_USED | ATTR_JUNCTION | ATTR_SYMBOLIC);
 
-        //
-        // filter unwanted stuff here based on current view settings
-        //
         pDoc = NULL;
         pProgram = NULL;
         if (!(lfndta.fd.dwFileAttributes & ATTR_DIR)) {
             pProgram = IsProgramFile(pName);
             pDoc = IsDocument(pName);
-
-            //
-            // filter programs and documents
-            //
-            if (!(dwAttribs & ATTR_PROGRAMS) && pProgram)
-                goto CDBCont;
-            if (!(dwAttribs & ATTR_DOCS) && pDoc)
-                goto CDBCont;
-            if (!(dwAttribs & ATTR_OTHER) && !(pProgram || pDoc))
-                goto CDBCont;
-        } else if (lfndta.fd.dwFileAttributes & ATTR_JUNCTION) {
-            if (!(dwAttribs & ATTR_JUNCTION)) {
-                goto CDBCont;
-            }
         }
 
         //

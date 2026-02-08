@@ -515,6 +515,13 @@ int GetMDIWindowText(HWND hwnd, LPWSTR szTitle, int size) {
         iWindowNumber = 0;
     }
 
+    // The window title contains only the directory path (e.g., "C:\temp").
+    // Append "\*.*" to reconstruct the internal path that callers expect.
+    if (GetWindowLongPtr(hwnd, GWL_TYPE) != -1L) {
+        AddBackslash(szTemp);
+        lstrcat(szTemp, kStarDotStar);
+    }
+
     //
     // Make sure the strcpy below doesn't blow up if COUNTOF( szTemp ) > size
     //
@@ -554,20 +561,18 @@ int GetMDIWindowText(HWND hwnd, LPWSTR szTitle, int size) {
 /////////////////////////////////////////////////////////////////////
 
 void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
-    WCHAR szTemp[MAXPATHLEN * 2 + 10];  // BONK!  is this big enough?
+    WCHAR szTemp[MAXPATHLEN * 2 + 10];
     WCHAR szNumber[20];
+    WCHAR szDisplay[MAXPATHLEN * 2 + 10];
     HWND hwndT;
     int num, max_num, cur_num;
     LPWSTR lpszVolShare;
     LPWSTR lpszVolName;
 
-    UINT cchTempLen;
     DRIVE drive;
-    BOOL bNumIncrement = FALSE;
     BOOL bNotSame;
 
     UINT uTitleLen;
-    DWORD dwError;
 
     cur_num = GetMDIWindowText(hwnd, szTemp, COUNTOF(szTemp));
 
@@ -583,27 +588,16 @@ void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
                 continue;
 
             if (!max_num && !num) {
-                DWORD Length = lstrlen(szTemp);
+                // Construct display title for the other window: strip filespec
+                lstrcpy(szDisplay, szTemp);
+                StripFilespec(szDisplay);
+                StripBackslash(szDisplay);
 
-                lstrcat(szTemp, SZ_COLONONE);
-                // if (wTextAttribs & TA_LOWERCASE)
-                //    CharLower(szTemp);
+                DWORD Length = lstrlen(szDisplay);
 
-                drive = (DWORD)GetWindowLongPtr(hwnd, GWL_TYPE);
-                if (drive != -1) { /* if not a search window */
-                    lstrcat(szTemp, SZ_SPACEDASHSPACE);
+                lstrcat(szDisplay, SZ_COLONONE);
 
-                    dwError = GetVolShare(drive, &lpszVolShare, ALTNAME_SHORT);
-
-                    if (!dwError || DE_REGNAME == dwError) {
-                        cchTempLen = lstrlen(szTemp);
-                        StrNCpy(szTemp + cchTempLen, lpszVolShare, COUNTOF(szTemp) - cchTempLen - 1);
-
-                        szTemp[COUNTOF(szTemp) - 1] = CHAR_NULL;
-                    }
-                }
-
-                SetWindowText(hwndT, szTemp);
+                SetWindowText(hwndT, szDisplay);
                 max_num = 1;
                 SetWindowLongPtr(hwndT, GWL_PATHLEN, Length);
             }
@@ -623,30 +617,28 @@ void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
         }
 
         wsprintf(szNumber, L":%d", max_num);
-        lstrcat(szTitle, szNumber);
     }
 
-    // if (wTextAttribs & TA_LOWERCASE)
-    //    CharLower(szTitle);
+    // Construct display title: strip filespec to show just the directory path
+    lstrcpy(szDisplay, szTitle);
+    StripFilespec(szDisplay);
+    StripBackslash(szDisplay);
 
-    if (drive != -1) { /* if this isn't a search window */
-        lstrcpy(szTemp, szTitle);
-        lstrcat(szTemp, SZ_SPACEDASHSPACE);
+    UINT uDisplayLen = lstrlen(szDisplay);
 
-        // Must store realname in GWL_VOLNAME
-        // But only for remote drives
+    if (max_num) {
+        lstrcat(szDisplay, szNumber);
+    }
 
+    if (drive != (DRIVE)-1) {
+        // Track remote drive volume name for change detection (used by wfinfo.cpp)
         lpszVolName = (LPWSTR)GetWindowLongPtr(hwnd, GWL_VOLNAME);
 
         if (lpszVolName)
             LocalFree(lpszVolName);
 
         if (GetVolShare(drive, &lpszVolShare, ALTNAME_REG) || !IsRemoteDrive(drive)) {
-            //
-            // If error or not a remote drive, then do not store this.
-            //
             lpszVolName = NULL;
-
         } else {
             lpszVolName = (LPWSTR)LocalAlloc(LPTR, ByteCountOf(lstrlen(lpszVolShare) + 1));
 
@@ -656,33 +648,14 @@ void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
         }
 
         SetWindowLongPtr(hwnd, GWL_VOLNAME, (LONG_PTR)lpszVolName);
-
-        //
-        // Use short name in window title
-        //
-        dwError = GetVolShare(drive, &lpszVolShare, ALTNAME_SHORT);
-
-        if (!dwError || DE_REGNAME == dwError) {
-            cchTempLen = lstrlen(szTemp);
-            StrNCpy(szTemp + cchTempLen, lpszVolShare, COUNTOF(szTemp) - cchTempLen - 1);
-
-            szTemp[COUNTOF(szTemp) - 1] = CHAR_NULL;
-        }
-
-        EnterCriticalSection(&CriticalSectionPath);
-
-        SetWindowLongPtr(hwnd, GWL_PATHLEN, uTitleLen);
-        //
-        // c:\foo\*.*:1 - [VOL LABEL]
-        // h:\foo\*.foo - \\server\share
-        //
-        SetWindowText(hwnd, szTemp);
-
-        LeaveCriticalSection(&CriticalSectionPath);
-
-    } else {
-        SetWindowText(hwnd, szTitle);
     }
+
+    EnterCriticalSection(&CriticalSectionPath);
+
+    SetWindowLongPtr(hwnd, GWL_PATHLEN, uDisplayLen);
+    SetWindowText(hwnd, szDisplay);
+
+    LeaveCriticalSection(&CriticalSectionPath);
 
     //
     // Now delimit szTitle to keep it the same

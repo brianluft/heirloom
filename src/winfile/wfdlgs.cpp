@@ -34,7 +34,7 @@ void SaveWindows(HWND hwndMain) {
     HWND hwnd;
     BOOL bCounting;
     RECT rcT;
-    DWORD view, sort, attribs;
+    DWORD view, sort;
     WINDOWPLACEMENT wp;
 
     // save main window position
@@ -84,7 +84,6 @@ DO_AGAIN:
                 continue;
             view = (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW);
             sort = (DWORD)GetWindowLongPtr(hwnd, GWL_SORT);
-            attribs = (DWORD)GetWindowLongPtr(hwnd, GWL_ATTRIBS);
 
             GetMDIWindowText(hwnd, szPath, COUNTOF(szPath));
 
@@ -94,13 +93,13 @@ DO_AGAIN:
             //   x_win, y_win,
             //   x_win, y_win,
             //   x_icon, y_icon,
-            //   show_window, view, sort, attribs, split, directory
+            //   show_window, view, sort, split, directory
 
             // NOTE: MDI child windows are in child coordinats; no translation is done.
             wsprintf(
-                buf2, L"%ld,%ld,%ld,%ld,%ld,%ld,%u,%lu,%lu,%lu,%d,%s", wp.rcNormalPosition.left,
-                wp.rcNormalPosition.top, wp.rcNormalPosition.right, wp.rcNormalPosition.bottom, wp.ptMinPosition.x,
-                wp.ptMinPosition.y, wp.showCmd, view, sort, attribs, GetSplit(hwnd), szPath);
+                buf2, L"%ld,%ld,%ld,%ld,%ld,%ld,%u,%lu,%lu,%d,%s", wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+                wp.rcNormalPosition.right, wp.rcNormalPosition.bottom, wp.ptMinPosition.x, wp.ptMinPosition.y,
+                wp.showCmd, view, sort, GetSplit(hwnd), szPath);
 
             // the dir is an ANSI string (?)
 
@@ -200,113 +199,6 @@ OtherDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
         default:
 
-            if (wMsg == wHelpMessage) {
-            DoHelp:
-                return TRUE;
-            } else
-                return FALSE;
-    }
-    return TRUE;
-}
-
-/*--------------------------------------------------------------------------*/
-/*                                                                          */
-/*  IncludeDlgProc() -                                                      */
-/*                                                                          */
-/*--------------------------------------------------------------------------*/
-
-INT_PTR
-CALLBACK
-IncludeDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
-    DWORD dwAttribs;
-    HWND hwndActive;
-
-    // To handle LONG paths with LONG filters (illegal)
-    WCHAR szTemp[2 * MAXPATHLEN];
-    WCHAR szInclude[MAXFILENAMELEN];
-    HWND hwndDir;
-    HWND hwndTree;
-
-    UNREFERENCED_PARAMETER(lParam);
-
-    hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
-
-    switch (wMsg) {
-        case WM_INITDIALOG:
-
-            SendMessage(hwndActive, FS_GETFILESPEC, COUNTOF(szTemp), (LPARAM)szTemp);
-            SetDlgItemText(hDlg, IDD_NAME, szTemp);
-            SendDlgItemMessage(hDlg, IDD_NAME, EM_LIMITTEXT, MAXFILENAMELEN - 1, 0L);
-
-            dwAttribs = (DWORD)GetWindowLongPtr(hwndActive, GWL_ATTRIBS);
-
-            CheckDlgButton(hDlg, IDD_DIR, dwAttribs & ATTR_DIR);
-            CheckDlgButton(hDlg, IDD_PROGRAMS, dwAttribs & ATTR_PROGRAMS);
-            CheckDlgButton(hDlg, IDD_DOCS, dwAttribs & ATTR_DOCS);
-            CheckDlgButton(hDlg, IDD_OTHER, dwAttribs & ATTR_OTHER);
-            CheckDlgButton(hDlg, IDD_SHOWHIDDEN, dwAttribs & ATTR_HIDDEN);
-            CheckDlgButton(hDlg, IDD_SHOWJUNCTION, dwAttribs & ATTR_JUNCTION);
-
-            break;
-
-        case WM_COMMAND:
-            switch (GET_WM_COMMAND_ID(wParam, lParam)) {
-                case IDD_HELP:
-                    goto DoHelp;
-
-                case IDCANCEL:
-                    EndDialog(hDlg, FALSE);
-                    break;
-
-                case IDOK:
-
-                    GetDlgItemText(hDlg, IDD_NAME, szInclude, COUNTOF(szInclude));
-
-                    // strip out quotes and trailing spaces
-                    KillQuoteTrailSpace(szInclude);
-
-                    if (szInclude[0] == 0L)
-                        lstrcpy(szInclude, kStarDotStar);
-
-                    dwAttribs = 0;
-                    if (IsDlgButtonChecked(hDlg, IDD_DIR))
-                        dwAttribs |= ATTR_DIR;
-                    if (IsDlgButtonChecked(hDlg, IDD_PROGRAMS))
-                        dwAttribs |= ATTR_PROGRAMS;
-                    if (IsDlgButtonChecked(hDlg, IDD_DOCS))
-                        dwAttribs |= ATTR_DOCS;
-                    if (IsDlgButtonChecked(hDlg, IDD_OTHER))
-                        dwAttribs |= ATTR_OTHER;
-                    if (IsDlgButtonChecked(hDlg, IDD_SHOWHIDDEN))
-                        dwAttribs |= ATTR_HS;
-                    if (IsDlgButtonChecked(hDlg, IDD_SHOWJUNCTION))
-                        dwAttribs |= ATTR_JUNCTION;
-
-                    if (!dwAttribs)
-                        dwAttribs = ATTR_EVERYTHING;
-
-                    EndDialog(hDlg, TRUE);  // here to avoid excess repaints
-
-                    if (hwndDir = HasDirWindow(hwndActive)) {
-                        SendMessage(hwndDir, FS_GETDIRECTORY, COUNTOF(szTemp), (LPARAM)szTemp);
-                        lstrcat(szTemp, szInclude);
-
-                        SetWindowLongPtr(hwndActive, GWL_ATTRIBS, dwAttribs);
-                        SendMessage(hwndDir, FS_CHANGEDISPLAY, CD_PATH_FORCE, (LPARAM)szTemp);
-                    }
-
-                    if (hwndTree = HasTreeWindow(hwndActive)) {
-                        SendMessage(hwndTree, TC_SETDRIVE, 0L, 0L);
-                    }
-
-                    break;
-
-                default:
-                    return FALSE;
-            }
-            break;
-
-        default:
             if (wMsg == wHelpMessage) {
             DoHelp:
                 return TRUE;

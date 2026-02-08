@@ -183,10 +183,6 @@ SearchDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                         hwndSearch = CreateMDIWindow(
                             kSearchClass, szMessage, style, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, hwndMDIClient,
                             hAppInstance, 0);
-
-                        // Forward the attributes to the search window, since hwndSearch was just created by
-                        // CreateMDIWindow
-                        SetWindowLongPtr(hwndSearch, GWL_ATTRIBS, GetWindowLongPtr(hwndMDIChild, GWL_ATTRIBS));
                     }
 
                     SendMessage(hwndSearch, FS_CHANGEDISPLAY, CD_PATH, (LPARAM)SearchInfo.szSearch);

@@ -534,7 +534,7 @@ BOOL ReadDirLevel(
     // in the dir window (instead of calling FindFirst/FindNext) if one is available.
     // In this case we have to disable yielding since the user could
     // potentially close the dir window that we are reading, or change directory.
-    if ((hwndDir = HasDirWindow(hwndParent)) && (GetWindowLongPtr(hwndParent, GWL_ATTRIBS) & ATTR_DIR)) {
+    if ((hwndDir = HasDirWindow(hwndParent))) {
         SendMessage(hwndDir, FS_GETDIRECTORY, COUNTOF(szMessage), (LPARAM)szMessage);
         StripBackslash(szMessage);
 
@@ -618,13 +618,6 @@ BOOL ReadDirLevel(
         lstrcpy(szMessage, szPath);
 
         bFound = WFFindFirst(&lfndta, szMessage, dwAttribs);
-
-        //
-        // if junctions are not displayed, continue to the next non-junction
-        //
-        if (bFound && !(dwAttribs & ATTR_JUNCTION)) {
-            bFound = WFFindNextNonJunction(&lfndta);
-        }
     }
 
     // for net drive case where we can't actually see what is in these
@@ -837,14 +830,8 @@ BOOL StealTreeData(HWND hwndTC, HWND hwndLB, LPWSTR szDir) {
     HWND hwndT;
     HWND hwndLBSrc;
     WCHAR szSrc[MAXPATHLEN];
-    DWORD dwAttribs;
 
     hwndT = NULL;
-
-    //
-    // we need to match on these attributes as well as the name
-    //
-    dwAttribs = GetWindowLongPtr(GetParent(hwndTC), GWL_ATTRIBS) & (ATTR_HS | ATTR_JUNCTION);
 
     //
     // get the dir of this new window for compare below
@@ -852,10 +839,8 @@ BOOL StealTreeData(HWND hwndTC, HWND hwndLB, LPWSTR szDir) {
     for (hwndSrc = GetWindow(hwndMDIClient, GW_CHILD); hwndSrc; hwndSrc = GetWindow(hwndSrc, GW_HWNDNEXT)) {
         //
         // avoid finding ourselves, make sure has a tree
-        // and make sure the tree attributes match
         //
-        if ((hwndT = HasTreeWindow(hwndSrc)) && (hwndT != hwndTC) && !GetWindowLongPtr(hwndT, GWL_READLEVEL) &&
-            (dwAttribs == (DWORD)(GetWindowLongPtr(hwndSrc, GWL_ATTRIBS) & (ATTR_HS | ATTR_JUNCTION)))) {
+        if ((hwndT = HasTreeWindow(hwndSrc)) && (hwndT != hwndTC) && !GetWindowLongPtr(hwndT, GWL_READLEVEL)) {
             SendMessage(hwndSrc, FS_GETDIRECTORY, COUNTOF(szSrc), (LPARAM)szSrc);
             StripBackslash(szSrc);
 
@@ -968,8 +953,7 @@ void FillTreeListbox(HWND hwndTC, LPWSTR szDefaultDir, BOOL bFullyExpand, BOOL b
             INVALID_FILE_ATTRIBUTES);
 
         if (pNode) {
-            dwAttribs = (DWORD)GetWindowLongPtr(GetParent(hwndTC), GWL_ATTRIBS);
-            dwAttribs = ATTR_DIR | (dwAttribs & (ATTR_HS | ATTR_JUNCTION));
+            dwAttribs = ATTR_DIR | ATTR_ALL;
             cNodes = 0;
             bCancelTree = FALSE;
 
@@ -1032,8 +1016,7 @@ void FillOutTreeList(HWND hwndTC, LPWSTR szDir, DWORD nIndex, PDNODE pNode) {
 
     SendMessage(hwndLB, WM_SETREDRAW, FALSE, 0L);
 
-    dwAttribs = (DWORD)GetWindowLongPtr(GetParent(hwndTC), GWL_ATTRIBS);
-    dwAttribs = ATTR_DIR | (dwAttribs & (ATTR_HS | ATTR_JUNCTION));
+    dwAttribs = ATTR_DIR | ATTR_ALL;
 
     // get path to node that already exists in tree; will start reading from there
     GetTreePath(pNode, szExists);
@@ -1633,8 +1616,7 @@ void ExpandLevel(HWND hWnd, WPARAM wParam, int nIndex, LPWSTR szPath) {
     U_VolInfo(DRIVEID(szPath));
 
     if (IsTheDiskReallyThere(hWnd, szPath, FUNC_EXPAND, FALSE)) {
-        dwAttribs = (DWORD)GetWindowLongPtr(GetParent(hWnd), GWL_ATTRIBS);
-        dwAttribs = ATTR_DIR | (dwAttribs & (ATTR_HS | ATTR_JUNCTION));
+        dwAttribs = ATTR_DIR | ATTR_ALL;
         ReadDirLevel(
             hWnd, pNode, szPath, pNode->nLevels + 1, nIndex, dwAttribs, (BOOL)wParam, NULL,
             IS_PARTIALSORT(DRIVEID(szPath)));
@@ -1997,7 +1979,6 @@ TreeControlWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             PDNODE pNodeT;
             DWORD dwFSCOperation;
             BOOLEAN bCreationOperation;
-            BOOLEAN bUpdateTree;
 
             dwFSCOperation = FSC_Operation(wParam);
             bCreationOperation = FALSE;
@@ -2043,33 +2024,13 @@ TreeControlWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                         break;
                     }
 
-                    //
-                    // If FSC_JUNCTION, check if junctions should be displayed
-                    //
-                    bUpdateTree = TRUE;
-                    if (dwFSCOperation == FSC_JUNCTION) {
-                        DWORD dwAttribsToInclude;
-                        dwAttribsToInclude = (DWORD)GetWindowLongPtr(GetParent(hwnd), GWL_ATTRIBS);
-                        if ((dwAttribsToInclude & ATTR_JUNCTION) == 0) {
-                            bUpdateTree = FALSE;
-                        }
-                    }
-
-                    if (bUpdateTree) {
+                    {
                         //
                         // Insert it into the tree listbox
                         //
                         InsertDirectory(
                             hwnd, pNode, (WORD)nIndex, szPath, &pNodeT, IsCasePreservedDrive(DRIVEID(((LPWSTR)lParam))),
                             FALSE, INVALID_FILE_ATTRIBUTES);
-
-                        //                        // Check for subdirectories                        // lstrcpy(szPath,
-                        //                        (LPWSTR)lParam);                        ScanDirLevel( (PDNODE)pNodeT,
-                        //                        szPath,                            (GetWindowLongPtr(hwndParent,
-                        //                        GWL_ATTRIBS) & (ATTR_HS | ATTR_JUNCTION)));                        //
-                        //                        // Invalidate the window                        // if
-                        //                        (((PDNODE)pNodeT)->wFlags & TF_HASCHILDREN) { InvalidateRect(hwndLB,
-                        //                        NULL, FALSE);                        }
                     }
 
                     break;

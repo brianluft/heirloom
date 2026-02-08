@@ -356,7 +356,6 @@ void GetSavedWindow(LPWSTR szBuf, PWINDOW pwin) {
     pwin->sw = SW_SHOWNORMAL;
     pwin->dwSort = IDD_NAME;
     pwin->dwView = VIEW_NAMEONLY;
-    pwin->dwAttribs = ATTR_DEFAULT;
     pwin->nSplit = 0;
 
     pwin->szDir[0] = CHAR_NULL;
@@ -373,7 +372,7 @@ void GetSavedWindow(LPWSTR szBuf, PWINDOW pwin) {
     count = 0;
     pint = (PINT)&pwin->rc;  // start by filling the rect
 
-    while (*szBuf && count < 11) {
+    while (*szBuf && count < 10) {
         *pint++ = atoi(szBuf);  // advance to next field
 
         while (*szBuf && *szBuf != CHAR_COMMA)
@@ -383,6 +382,31 @@ void GetSavedWindow(LPWSTR szBuf, PWINDOW pwin) {
             szBuf++;
 
         count++;
+    }
+
+    // Handle old INI files that have an extra "attribs" field before the path.
+    // Old format: ...,view,sort,attribs,split,path  (attribs is a number)
+    // New format: ...,view,sort,split,path
+    // If what remains starts with a digit, we consumed the old attribs value
+    // as nSplit. Skip the real split value that follows and use it instead.
+    if (*szBuf && *szBuf >= L'0' && *szBuf <= L'9') {
+        // The previous field was actually attribs (now unused); read split next
+        pwin->nSplit = _wtoi(szBuf);
+
+        while (*szBuf && *szBuf != CHAR_COMMA)
+            szBuf++;
+
+        while (*szBuf && *szBuf == CHAR_COMMA)
+            szBuf++;
+    } else if (*szBuf && *szBuf == L'-') {
+        // nSplit can be negative in old format too
+        pwin->nSplit = _wtoi(szBuf);
+
+        while (*szBuf && *szBuf != CHAR_COMMA)
+            szBuf++;
+
+        while (*szBuf && *szBuf == CHAR_COMMA)
+            szBuf++;
     }
 
     lstrcpy(pwin->szDir, szBuf);  // this is the directory
@@ -429,7 +453,6 @@ BOOL CreateSavedWindows(LPCWSTR pszInitialDir) {
 
     win.dwView = dwNewView;
     win.dwSort = dwNewSort;
-    win.dwAttribs = dwNewAttribs;
 
     //
     // make sure this thing exists so we don't hit drives that don't
@@ -471,7 +494,6 @@ BOOL CreateSavedWindows(LPCWSTR pszInitialDir) {
 
                 dwNewView = win.dwView;
                 dwNewSort = win.dwSort;
-                dwNewAttribs = win.dwAttribs;
 
                 hwnd = CreateTreeWindow(
                     win.szDir, win.rc.left, win.rc.top, win.rc.right - win.rc.left, win.rc.bottom - win.rc.top,
@@ -514,7 +536,6 @@ BOOL CreateSavedWindows(LPCWSTR pszInitialDir) {
 
             dwNewView = win.dwView;
             dwNewSort = win.dwSort;
-            dwNewAttribs = win.dwAttribs;
 
             hwnd = CreateTreeWindow(
                 buf, win.rc.left, win.rc.top, win.rc.right - win.rc.left, win.rc.bottom - win.rc.top, win.nSplit);

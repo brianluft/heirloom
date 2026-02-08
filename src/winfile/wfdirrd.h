@@ -5,7 +5,7 @@
 
 BOOL InitDirRead();
 void DestroyDirRead();
-LPXDTALINK CreateDTABlock(HWND hwnd, LPWSTR pPath, DWORD dwAttribs, BOOL bDontSteal);
+LPXDTALINK CreateDTABlock(HWND hwnd, LPWSTR pPath, BOOL bDontSteal);
 void FreeDTA(HWND hwnd);
 void DirReadDestroyWindow(HWND hwndDir);
 LPXDTALINK DirReadDone(HWND hwndDir, LPXDTALINK lpStart, int iError);

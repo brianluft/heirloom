@@ -1087,7 +1087,6 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     // Create a new one (preserving the Sort setting).
                     //
                     dwNewSort = (DWORD)GetWindowLongPtr(hwndListParms, GWL_SORT);
-                    dwNewAttribs = (DWORD)GetWindowLongPtr(hwndListParms, GWL_ATTRIBS);
                     SetWindowLongPtr(hwndListParms, GWL_VIEW, dwNewView);
 
                     bCreateDTABlock = FALSE;  // and szPath is NOT set
@@ -1187,7 +1186,6 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     //
                     dwNewSort = (DWORD)GetWindowLongPtr(hwndListParms, GWL_SORT);
                     dwNewView = (DWORD)GetWindowLongPtr(hwndListParms, GWL_VIEW);
-                    dwNewAttribs = (DWORD)GetWindowLongPtr(hwndListParms, GWL_ATTRIBS);
 
                     SetWindowLongPtr(hwnd, GWLP_USERDATA, 1);
                     SendMessage(hwndLB, LB_RESETCONTENT, 0, 0L);
@@ -1206,7 +1204,7 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             lpStart = NULL;
 
             //
-            // dwNewView, dwNewSort and dwNewAttribs define the viewing
+            // dwNewView and dwNewSort define the viewing
             // parameters of the new window (GLOBALS)
             // the window text of the parent window defines the
             // filespec and the directory to open up
@@ -1282,11 +1280,8 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 SetWindowLongPtr(hwndLB, GWLP_USERDATA, (LONG_PTR)lpfnOldProc);
             }
 
-            if (!dwNewAttribs)
-                dwNewAttribs = ATTR_DEFAULT;
-
             //
-            //  Set all the view/sort/include parameters if they haven't
+            //  Set all the view/sort parameters if they haven't
             //  already been set.
             //
             //  NOTE: A value of 0 in GWL_SORT is invalid, so check this
@@ -1295,7 +1290,6 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             if (!GetWindowLongPtr(hwndListParms, GWL_SORT)) {
                 SetWindowLongPtr(hwndListParms, GWL_VIEW, dwNewView);
                 SetWindowLongPtr(hwndListParms, GWL_SORT, dwNewSort);
-                SetWindowLongPtr(hwndListParms, GWL_ATTRIBS, dwNewAttribs);
             }
 
             //
@@ -1320,7 +1314,7 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                 SetMDIWindowText(hwndListParms, szPath);
 
-                lpStart = CreateDTABlock(hwnd, szPath, dwNewAttribs, (lParam == 0L) || bDontSteal);
+                lpStart = CreateDTABlock(hwnd, szPath, (lParam == 0L) || bDontSteal);
 
                 if (hwnd != hwndListParms) {
                     //

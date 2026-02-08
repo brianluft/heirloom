@@ -400,7 +400,6 @@ HWND CreateTreeWindow(LPWSTR szPath, int x, int y, int dx, int dy, int dxSplit) 
     //
     SetWindowLongPtr(hwnd, GWL_VIEW, dwNewView);
     SetWindowLongPtr(hwnd, GWL_SORT, dwNewSort);
-    SetWindowLongPtr(hwnd, GWL_ATTRIBS, dwNewAttribs);
 
     return hwnd;
 }
@@ -1802,10 +1801,6 @@ BOOL AppCommandProc(DWORD id) {
                 DrawMenuBar(hwndFrame);
             }
 
-            break;
-
-        case IDM_VINCLUDE:
-            DialogBox(hAppInstance, (LPWSTR)MAKEINTRESOURCE(INCLUDEDLG), hwndFrame, IncludeDlgProc);
             break;
 
         case IDM_CONFIRM:

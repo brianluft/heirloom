@@ -69,7 +69,7 @@ Frame Window (FrameWndProc) - hwndFrame
 #### Directory Listing (`wfdir.cpp`)
 - **File Enumeration** - Directory content reading and caching
 - **Multi-Column Display** - Name, size, date, time, attributes with custom drawing
-- **Sorting and Filtering** - Multiple sort criteria and attribute-based filtering
+- **Sorting** - Multiple sort criteria for file ordering
 - **Selection Management** - Multi-selection with drag-and-drop support
 - **View Modes** - Name-only vs. detailed views with customizable columns
 
@@ -142,7 +142,7 @@ Frame Window (FrameWndProc) - hwndFrame
 
 ### Drive and Path Management
 - **`DRIVE_INFO`** - Comprehensive drive information including type, space, and network details
-- **`WINDOW`** - Window state persistence structure for position and view settings
+- **`WINDOW`** - Window state persistence structure for position, view settings, and sort order
 - **Global Drive Arrays** - `rgiDrive[]`, `aDriveInfo[]` for system-wide drive management
 
 ### Search and Selection
@@ -164,7 +164,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Dual-Pane View** - Resizable split between tree and file listing
 - **Multiple Windows** - MDI interface supporting up to 27 concurrent windows
 - **Window Minimization** - Minimized MDI children appear as icons in a bottom bar (simulating Windows 3.11 behavior), double-click to restore
-- **Customizable Views** - Name-only, detailed, with configurable columns and sorting
+- **Customizable Views** - Name-only, detailed, with configurable columns and sorting; all files are always shown (no file type filtering)
 - **Drive Bar** - Visual drive selection with status indicators
 - **Search Interface** - Integrated search with real-time results and progress
 

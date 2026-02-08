@@ -222,7 +222,6 @@ typedef struct {
     int sw;
     DWORD dwView;
     DWORD dwSort;
-    DWORD dwAttribs;
     int nSplit;
 } WINDOW, *PWINDOW;
 
@@ -297,11 +296,9 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam
 
 #define GWL_OLEDROP (7 * sizeof(LONG_PTR))
 
-#define GWL_ATTRIBS (8 * sizeof(LONG_PTR))
+#define GWL_FSCFLAG (8 * sizeof(LONG_PTR))
 
-#define GWL_FSCFLAG (9 * sizeof(LONG_PTR))
-
-#define GWL_LASTFOCUS (10 * sizeof(LONG_PTR))
+#define GWL_LASTFOCUS (9 * sizeof(LONG_PTR))
 
 // szDrivesClass...
 
@@ -402,11 +399,6 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam
 #define ATTR_ALL                                                                                           \
     (ATTR_READONLY | ATTR_HIDDEN | ATTR_SYSTEM | ATTR_DIR | ATTR_ARCHIVE | ATTR_NORMAL | ATTR_COMPRESSED | \
      ATTR_ENCRYPTED | ATTR_REPARSE_POINT)
-#define ATTR_PROGRAMS 0x0100
-#define ATTR_DOCS 0x0200
-#define ATTR_OTHER 0x1000
-#define ATTR_EVERYTHING (ATTR_ALL | ATTR_PROGRAMS | ATTR_DOCS | ATTR_OTHER | ATTR_PARENT)
-#define ATTR_DEFAULT (ATTR_EVERYTHING & ~(ATTR_HIDDEN | ATTR_SYSTEM))
 #define ATTR_HS (ATTR_HIDDEN | ATTR_SYSTEM)
 
 #define ATTR_RETURNED 0x8000 /* used in DTA's by copy */
@@ -747,7 +739,6 @@ Extern UINT wBrowseMessage;
 Extern LPWSTR pszInitialDirSel;
 Extern DWORD dwNewView EQ(VIEW_NAMEONLY);
 Extern DWORD dwNewSort EQ(IDD_NAME);
-Extern DWORD dwNewAttribs EQ(ATTR_DEFAULT);
 
 Extern LARGE_INTEGER qFreeSpace;
 Extern LARGE_INTEGER qTotalSpace;

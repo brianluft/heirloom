@@ -11,14 +11,14 @@
 ## File Manager (winfile)
 - Codebase documentation: `doc/winfile-overview.md`. Important: Keep this updated as you modify the codebase!
 - Directory: `src/winfile/`
-- Always run the build with `bash src/build-winfile.sh` after making changes.
+- Always run the build with `bash scripts/build-winfile.sh` after making changes.
 - This is the classic Windows File Manager codebase.
 - When creating new source files, OMIT the file-level comment header.
 
 ## Program Manager (progman)
 - Codebase documentation: `doc/program-overview.md`. Important: Keep this updated as you modify the codebase!
 - Directories: `src/progman/`, `src/libprogman/`, `src/libprogman_tests`
-- Always run the build and tests with `bash src/build-progman.sh` after making changes.
+- Always run the build and tests with `bash scripts/build-progman.sh` after making changes.
 - Prefer the C++ Standard Library like std::wstring over old fashioned C like WCHAR* or LPWSTR.
 - Use smart pointer classes. Avoid "new".
 - Only use old fashioned C conventions when interfacing with Win32 API.
