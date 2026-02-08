@@ -28,12 +28,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cancel.cpp" />
+    <ClCompile Include="MinimizedWindowListControl.cpp" />
+    <ClCompile Include="window_data.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cancel.h" />
+    <ClInclude Include="MinimizedWindowListControl.h" />
+    <ClInclude Include="window_data.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="windows10.h" />
   </ItemGroup>

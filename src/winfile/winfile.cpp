@@ -20,6 +20,7 @@
 #include "wfsearch.h"
 #include "stringconstants.h"
 #include "bookmark.h"
+#include "wfminbar.h"
 #include <commctrl.h>
 #include <shlobj.h>
 
@@ -555,6 +556,8 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 return -1L;
             }
 
+            InitMinimizedWindowBar(hAppInstance, hwndMDIClient);
+
             // make new drives window
 
             hwndDriveBar = CreateWindow(
@@ -618,6 +621,7 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
         case WM_DESTROY:
 
+            DestroyMinimizedWindowBar();
             hwndFrame = NULL;
             PostQuitMessage(0);
             DestroyWindow(hwndDriveBar);
@@ -627,6 +631,7 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             if (wParam != SIZEICONIC) {
                 // uses new resize!
                 ResizeControls();
+                MinBarAutoSize();
             }
             break;
 

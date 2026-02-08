@@ -87,6 +87,7 @@
 #include "wfcopy.h"
 #include "wfsearch.h"
 #include "stringconstants.h"
+#include "wfminbar.h"
 
 #include <commctrl.h>
 
@@ -902,10 +903,11 @@ SearchWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 #undef pLBItem
 
         case WM_SYSCOMMAND:
-            // Prevent minimization of MDI child windows
-            // This is a workaround for the fact that we can't disable the minimize button
-            if (wParam == SC_MINIMIZE)
+            if (wParam == SC_MINIMIZE) {
+                MinBarAddWindow(hwnd);
+                ShowWindow(hwnd, SW_HIDE);
                 break;
+            }
 
             return DefMDIChildProc(hwnd, uMsg, wParam, lParam);
 

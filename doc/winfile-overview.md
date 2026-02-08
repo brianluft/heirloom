@@ -23,8 +23,10 @@ Frame Window (FrameWndProc) - hwndFrame
 │   │   │   └── Tree Listbox (IDCW_TREELISTBOX)
 │   │   └── Directory Listbox (DirWndProc) - hwndDir
 │   │       └── File Listbox (IDCW_LISTBOX)
-│   └── Search Window (SearchWndProc) - hwndSearch
-│       └── Results Listbox (IDCW_LISTBOX)
+│   ├── Search Window (SearchWndProc) - hwndSearch
+│   │   └── Results Listbox (IDCW_LISTBOX)
+│   └── Minimized Window Bar (WinfileMinimizedWindowList) - bottom of MDI client
+│       └── ListView (icon view showing minimized window labels and icons)
 └── Status Bar - hwndStatus
 ```
 
@@ -44,6 +46,16 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Split Management** - Dynamic resizing between tree and directory panes
 - **Focus Coordination** - Managing focus between tree and directory components
 - **Window State Persistence** - Saving and restoring window positions and split ratios
+
+#### Minimized Window Bar (`wfminbar.cpp`)
+- **`WinfileMinimizedWindowList`** - Derived from `libheirloom::MinimizedWindowListControl`
+- Shows minimized MDI children as labeled icons in a ListView at the bottom of the MDI client
+- Minimizing a tree or search window hides it and adds an entry to the bar
+- Double-click restores the window to its previous size and position
+- Displays shortened path labels extracted from window titles
+- Uses per-window icons (tree/dir/treedir icons from `GetTreeIcon`, or app icon for search windows)
+- Splitter at top edge allows resizing the bar height by dragging
+- C-style API (`InitMinimizedWindowBar`, `MinBarAddWindow`, etc.) wraps the class instance
 
 ### File System Navigation Layer
 
@@ -151,6 +163,7 @@ Frame Window (FrameWndProc) - hwndFrame
 ### User Interface Features
 - **Dual-Pane View** - Resizable split between tree and file listing
 - **Multiple Windows** - MDI interface supporting up to 27 concurrent windows
+- **Window Minimization** - Minimized MDI children appear as icons in a bottom bar (simulating Windows 3.11 behavior), double-click to restore
 - **Customizable Views** - Name-only, detailed, with configurable columns and sorting
 - **Drive Bar** - Visual drive selection with status indicators
 - **Search Interface** - Integrated search with real-time results and progress
@@ -235,7 +248,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **File System Drivers** - NTFS, FAT32, network file systems
 - **Graphics Subsystem** - GDI for custom drawing and PNG support
 - **COM/OLE** - Drag and drop operations and shell integration
-- **libheirloom** - Shared library providing cancellation token support for background operations
+- **libheirloom** - Shared library providing cancellation token support for background operations, `MinimizedWindowListControl` base class for the minimized window bar, and `window_data` for associating data with HWNDs
 - **libwinfile** - Static library providing shared functionality for winfile
   - **ArchiveStatus** - Thread-safe status class for archive operations with mutex-protected UI updates
     - **Progress Support** - Enhanced with progress percentage tracking via updateWithProgress() and readWithProgress() methods

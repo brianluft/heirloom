@@ -51,6 +51,8 @@ The application uses constructor dependency injection with the DI graph construc
   - `string_util` - UTF-8/UTF-16 string conversions
   - `cancel` - Cancellation token system (C#-style)
   - `Error` - Custom exception types
+  - `MinimizedWindowListControl` (in `libheirloom`) - Shared base class for minimized window bars
+  - `window_data` (forwarded from `libheirloom`) - Associates backing objects with HWNDs
 
 ### UI Layer (`progman/`)
 
@@ -70,11 +72,10 @@ The application uses constructor dependency injection with the DI graph construc
   - Supports drag and drop of files and shortcuts
 
 - **`MinimizedFolderListControl`** - Shows minimized folders
-  - List control for minimized folder windows
-  - Supports splitter resize functionality
+  - Inherits from `libheirloom::MinimizedWindowListControl` (shared base class)
+  - Base class provides: splitter resize, add/remove items with per-item icons, DPI scaling, z-order management
+  - Derived class adds: folder icon, LVS_EDITLABELS, context menu (Open/Rename/Delete), F2/Ctrl+D keyboard shortcuts
   - Double-click to restore folders
-  - F2 key to rename selected minimized folder
-  - Ctrl+D key to delete selected minimized folder
   - Right-click context menu with Open, Rename, Delete options
   - Prevents duplicate folder icons during rename by deferring UI updates to filesystem watcher
 

@@ -20,11 +20,9 @@
 #include "wfinit.h"
 #include "wfdrives.h"
 #include "stringconstants.h"
+#include "wfminbar.h"
 
 #include <commctrl.h>
-
-HICON
-GetTreeIcon(HWND hWnd);
 
 HICON
 GetTreeIcon(HWND hWnd) {
@@ -591,10 +589,11 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             break;
 
         case WM_SYSCOMMAND:
-            // Prevent minimization of MDI child windows
-            // This is a workaround for the fact that we can't disable the minimize button
-            if (wParam == SC_MINIMIZE)
+            if (wParam == SC_MINIMIZE) {
+                MinBarAddWindow(hwnd);
+                ShowWindow(hwnd, SW_HIDE);
                 break;
+            }
 
             if (wParam != SC_SPLIT)
                 goto DEF_MDI_PROC;
