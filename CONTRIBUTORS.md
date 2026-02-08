@@ -1,6 +1,11 @@
 # Getting started
-- Run `src/install-deps.sh` to download the required third party dependency files.
-- Build with `src/build-*.sh` or one of the Visual Studio solutions.
+- Install [Visual Studio 2022 Community](https://aka.ms/vs/17/release/vs_community.exe).
+    - Workloads
+        - "Desktop development with C++"
+    - Individual components
+        - "C++ Clang Compiler for Windows"
+- Set up vcpkg with `scripts/vcpkg.sh integrate install`
+- Build with `scripts/build.sh` or one of the Visual Studio solutions.
 
 # Editing dialogs
 - Set the font to Segoe UI / Regular / 9pt.
