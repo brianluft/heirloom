@@ -306,10 +306,10 @@ void extractZipArchive(
 
                     // Copy data
                     constexpr size_t bufferSize = 1048576;
-                    std::array<char, bufferSize> buffer;
+                    auto buffer = std::make_unique<char[]>(bufferSize);
                     zip_int64_t bytesRead;
-                    while ((bytesRead = zip_fread(file, buffer.data(), bufferSize)) > 0) {
-                        outFile.write(buffer.data(), bytesRead);
+                    while ((bytesRead = zip_fread(file, buffer.get(), bufferSize)) > 0) {
+                        outFile.write(buffer.get(), bytesRead);
                         if (outFile.fail()) {
                             throw std::runtime_error("Failed to write to output file: " + pathToUtf8(entryPath));
                         }
