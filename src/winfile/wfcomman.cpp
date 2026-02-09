@@ -1864,7 +1864,11 @@ BOOL AppCommandProc(DWORD id) {
             break;
 
         case IDM_NEWWINDOW:
-            NewTree((int)SendMessage(hwndActive, FS_GETDRIVE, 0, 0L) - CHAR_A, hwndActive);
+            if (hwndActive) {
+                NewTree((int)SendMessage(hwndActive, FS_GETDRIVE, 0, 0L) - CHAR_A, hwndActive);
+            } else {
+                NewTree(DRIVEID(szOriginalDirPath), NULL);
+            }
             break;
 
         case IDM_CASCADE:

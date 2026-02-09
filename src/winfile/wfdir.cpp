@@ -2294,6 +2294,7 @@ int CompareDTA(LPXDTA lpItem1, LPXDTA lpItem2, DWORD dwSort) {
         case IDD_NAME:
 
         CompareNames:
+        default:
             ret = lstrcmpi(MemGetFileName(lpItem1), MemGetFileName(lpItem2));
             break;
     }

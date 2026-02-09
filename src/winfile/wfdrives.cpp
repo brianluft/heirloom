@@ -68,7 +68,9 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
     if (!CheckDrive(hwndSrc, drive, FUNC_SETDRIVE))
         return;
 
-    pszSearchDir = (LPWSTR)SendMessage(hwndSrc, FS_GETSELECTION, 1 | 4 | 16, (LPARAM)&bDir);
+    if (hwndSrc) {
+        pszSearchDir = (LPWSTR)SendMessage(hwndSrc, FS_GETSELECTION, 1 | 4 | 16, (LPARAM)&bDir);
+    }
 
     //
     // If no selection
@@ -92,9 +94,17 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
 
         // TODO: if directory in right pane, get that instead of directory in left pane
 
-        GetSelectedDirectory(drive + 1, szDir);
-        AddBackslash(szDir);
-        SendMessage(hwndSrc, FS_GETFILESPEC, MAXPATHLEN, (LPARAM)(szDir + lstrlen(szDir)));
+        if (hwndSrc) {
+            GetSelectedDirectory(drive + 1, szDir);
+            AddBackslash(szDir);
+            SendMessage(hwndSrc, FS_GETFILESPEC, MAXPATHLEN, (LPARAM)(szDir + lstrlen(szDir)));
+        } else {
+            szDir[0] = CHAR_A + drive;
+            szDir[1] = CHAR_COLON;
+            szDir[2] = CHAR_BACKSLASH;
+            szDir[3] = CHAR_NULL;
+            lstrcat(szDir, kStarDotStar);
+        }
     } else {
         lstrcpy(szDir, pszSearchDir);
 
@@ -119,7 +129,7 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
         lstrcat(szDir, kStarDotStar);
     }
 
-    if (hwndSrc == hwndSearch) {
+    if (!hwndSrc || hwndSrc == hwndSearch) {
         dxSplit = -1;
     } else {
         hwndTree = HasTreeWindow(hwndSrc);
@@ -138,8 +148,13 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
     // take all the attributes from the current window
     // (except the filespec, we may want to change this)
     //
-    dwNewSort = (DWORD)GetWindowLongPtr(hwndSrc, GWL_SORT);
-    dwNewView = (DWORD)GetWindowLongPtr(hwndSrc, GWL_VIEW);
+    if (hwndSrc) {
+        dwNewSort = (DWORD)GetWindowLongPtr(hwndSrc, GWL_SORT);
+        dwNewView = (DWORD)GetWindowLongPtr(hwndSrc, GWL_VIEW);
+    } else {
+        dwNewSort = IDD_NAME;
+        dwNewView = VIEW_NAMEONLY;
+    }
 
     hwnd = CreateTreeWindow(szDir, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, dxSplit);
 
