@@ -13,6 +13,7 @@
 #include "lfn.h"
 #include "wfdos.h"
 #include "wfutil.h"
+#include "wfcomman.h"
 #include "wftree.h"
 #include "wfdrives.h"
 #include "stringconstants.h"
@@ -1420,4 +1421,26 @@ HMODULE LoadSystemLibrary(LPCWSTR FileName) {
     Module = LoadLibrary(FullPath);
     LocalFree(FullPath);
     return Module;
+}
+
+void SetCurrentPathOfWindow(LPWSTR szPath) {
+    WCHAR szFullPath[MAXPATHLEN];
+    LPWSTR szFilePart;
+    DWORD result;
+    HWND hwndActive;
+    HWND hwndNew;
+    HWND hwndTree;
+
+    result = GetFullPathName(szPath, COUNTOF(szFullPath), szFullPath, &szFilePart);
+    if (result == 0 || result >= COUNTOF(szFullPath) || ISUNCPATH(szFullPath)) {
+        return;
+    }
+
+    hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+    hwndNew = CreateDirWindow(szFullPath, TRUE, hwndActive);
+    hwndTree = HasTreeWindow(hwndNew);
+
+    if (hwndTree) {
+        SetFocus(hwndTree);
+    }
 }

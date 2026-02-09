@@ -178,8 +178,6 @@ void GetSettings() {
 
     /* Get the flags out of the INI file. */
     bMinOnRun = GetPrivateProfileInt(kSettings, kMinOnRun, bMinOnRun, szTheINIFile);
-    bIndexOnLaunch = GetPrivateProfileInt(kSettings, kIndexOnLaunch, bIndexOnLaunch, szTheINIFile);
-    bIndexHiddenSystem = GetPrivateProfileInt(kSettings, kIndexHiddenSystem, bIndexHiddenSystem, szTheINIFile);
     wTextAttribs = (WORD)GetPrivateProfileInt(kSettings, kLowerCase, wTextAttribs, szTheINIFile);
     bStatusBar = GetPrivateProfileInt(kSettings, kStatusBar, bStatusBar, szTheINIFile);
 
@@ -256,9 +254,6 @@ void InitMenus() {
         CheckMenuItem(hMenu, IDM_STATUSBAR, MF_BYCOMMAND | MF_CHECKED);
     if (bMinOnRun)
         CheckMenuItem(hMenu, IDM_MINONRUN, MF_BYCOMMAND | MF_CHECKED);
-    if (bIndexOnLaunch)
-        CheckMenuItem(hMenu, IDM_INDEXONLAUNCH, MF_BYCOMMAND | MF_CHECKED);
-
     if (bSaveSettings)
         CheckMenuItem(hMenu, IDM_SAVESETTINGS, MF_BYCOMMAND | MF_CHECKED);
 
@@ -1183,10 +1178,6 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     }
 
     SetThreadPriority(hThread, THREAD_PRIORITY_NORMAL);
-
-    if (bIndexOnLaunch) {
-        StartBuildingDirectoryTrie();
-    }
 
     return TRUE;
 }

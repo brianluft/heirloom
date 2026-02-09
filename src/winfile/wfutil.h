@@ -55,3 +55,4 @@ void CleanupMessages();
 HWND GetRealParent(HWND hwnd);
 LPWSTR GetFullPathInSystemDirectory(LPCWSTR FileName);
 HMODULE LoadSystemLibrary(LPCWSTR FileName);
+void SetCurrentPathOfWindow(LPWSTR szPath);

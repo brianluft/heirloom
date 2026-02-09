@@ -24,7 +24,6 @@
     <ClCompile Include="wfdrop.cpp" />
     <ClCompile Include="wfext.cpp" />
     <ClCompile Include="wffile.cpp" />
-    <ClCompile Include="wfgoto.cpp" />
     <ClCompile Include="wfinfo.cpp" />
     <ClCompile Include="wfinit.cpp" />
     <ClCompile Include="wfmem.cpp" />
@@ -46,7 +45,6 @@
   <ItemGroup>
     <ClInclude Include="archiveprogress.h" />
     <ClInclude Include="lfn.h" />
-    <ClInclude Include="BagOValues.h" />
     <ClInclude Include="mpr.h" />
     <ClInclude Include="numfmt.h" />
     <ClInclude Include="suggest.h" />
@@ -79,7 +77,6 @@
     <ClInclude Include="wfdirrd.h" />
     <ClInclude Include="wfdirsrc.h" />
     <ClInclude Include="wfdrives.h" />
-    <ClInclude Include="wfgoto.h" />
     <ClInclude Include="wfinit.h" />
     <ClInclude Include="wfsearch.h" />
     <ClInclude Include="wftree.h" />

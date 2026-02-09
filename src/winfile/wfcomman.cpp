@@ -23,7 +23,6 @@
 #include "wfinit.h"
 #include "wfdrives.h"
 #include "wfsearch.h"
-#include "wfgoto.h"
 #include "stringconstants.h"
 #include "bookmark.h"
 #include <shlobj.h>
@@ -819,10 +818,6 @@ BOOL AppCommandProc(DWORD id) {
             TypeAheadString('\0', NULL);
 
             OpenOrEditSelection(hwndActive, TRUE);
-            break;
-
-        case IDM_GOTODIR:
-            DialogBox(hAppInstance, (LPWSTR)MAKEINTRESOURCE(GOTODIRDLG), hwndFrame, GotoDirDlgProc);
             break;
 
         case IDM_HISTORYBACK:
@@ -1849,11 +1844,6 @@ BOOL AppCommandProc(DWORD id) {
             WritePrivateProfileBool(kMinOnRun, bMinOnRun);
             goto CHECK_OPTION;
 
-        case IDM_INDEXONLAUNCH:
-            bTemp = bIndexOnLaunch = !bIndexOnLaunch;
-            WritePrivateProfileBool(kIndexOnLaunch, bIndexOnLaunch);
-            goto CHECK_OPTION;
-
         CHECK_OPTION:
             //
             // Check/Uncheck the menu item.
@@ -1931,8 +1921,6 @@ BOOL AppCommandProc(DWORD id) {
             //
             SPC_SET_INVALID(qFreeSpace);
             UpdateStatus(hwndActive);
-
-            StartBuildingDirectoryTrie();
 
             break;
         }

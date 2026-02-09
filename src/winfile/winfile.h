@@ -610,8 +610,6 @@ Extern CRITICAL_SECTION CriticalSectionPath;
 Extern LCID lcid;
 
 Extern BOOL bMinOnRun EQ(FALSE);
-Extern BOOL bIndexOnLaunch EQ(TRUE);
-Extern BOOL bIndexHiddenSystem EQ(FALSE);
 Extern BOOL bStatusBar EQ(TRUE);
 
 Extern BOOL bDriveBar EQ(TRUE);
@@ -635,9 +633,6 @@ Extern int iShowSourceBitmaps EQ(1);
 Extern BOOL bFSCTimerSet EQ(FALSE);
 
 Extern WCHAR chFirstDrive;  // 'A' or 'a'
-
-Extern WCHAR szCachedPathIni[MAXPATHLEN];
-Extern WCHAR szPunctuation[MAXPATHLEN];
 
 Extern UINT uChangeNotifyTime EQ(3000);
 

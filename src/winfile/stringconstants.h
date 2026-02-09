@@ -14,13 +14,7 @@ constexpr WCHAR kDriveBar[] = L"DriveBar";
 constexpr WCHAR kNewWinOnNetConnect[] = L"NewWinOnNetConnect";
 constexpr WCHAR kEditorPath[] = L"EditorPath";
 constexpr WCHAR kMirrorContent[] = L"MirrorContent";
-constexpr WCHAR kCachedPath[] = L"CachedPath";
-
-constexpr WCHAR kGotoCachePunctuation[] = L"GotoCachePunctuation";
-
 constexpr WCHAR kMinOnRun[] = L"MinOnRun";
-constexpr WCHAR kIndexOnLaunch[] = L"IndexOnLaunch";
-constexpr WCHAR kIndexHiddenSystem[] = L"IndexHiddenSystem";
 constexpr WCHAR kStatusBar[] = L"StatusBar";
 constexpr WCHAR kSaveSettings[] = L"Save Settings";
 constexpr WCHAR kScrollOnExpand[] = L"ScrollOnExpand";

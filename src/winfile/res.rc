@@ -94,7 +94,6 @@ BEGIN
 	"^b",       IDM_STARTBASHSHELL, NOINVERT
 	"^k",       IDM_STARTCMDSHELL, NOINVERT
 	"^p",       IDM_STARTPOWERSHELL, NOINVERT
-	"^g",       IDM_GOTODIR, NOINVERT
 	"^f",       IDM_SEARCH, NOINVERT
 	"^w",       IDM_CLOSEWINDOW, NOINVERT
 	VK_LEFT,    IDM_HISTORYBACK, NOINVERT, VIRTKEY, ALT
@@ -202,7 +201,6 @@ BEGIN
     MENUITEM    "Open PowerShell\tCtrl+P", IDM_STARTPOWERSHELL
     MENUITEM    "Open Explorer\tCtrl+E", IDM_STARTEXPLORER
     END
-    MENUITEM    "&Goto Directory...\tCtrl+G", IDM_GOTODIR
     MENUITEM    SEPARATOR
     MENUITEM    "Empty &Recycle Bin", IDM_EMPTYRECYCLE
     MENUITEM    SEPARATOR
@@ -242,7 +240,6 @@ BEGIN
     MENUITEM    "&Status Bar",              IDM_STATUSBAR
     MENUITEM    SEPARATOR
     MENUITEM    "&Minimize on Use",     IDM_MINONRUN
-    MENUITEM    "Create &Goto Index on Launch", IDM_INDEXONLAUNCH
     MENUITEM    "Save Settings on &Exit",   IDM_SAVESETTINGS
     MENUITEM    SEPARATOR
     MENUITEM    "Save Settings &Now",       IDM_SAVENOW
@@ -662,7 +659,6 @@ BEGIN
     MH_MYITEMS+IDM_NEWWINONCONNECT,     "Opens a new window when you connect"
 
     MH_MYITEMS+IDM_MINONRUN,    "Reduces Heirloom File Manager to an icon at startup"
-    MH_MYITEMS + IDM_INDEXONLAUNCH, "Creates an index for Goto Directory when Heirloom File Manager launches"
     MH_MYITEMS+IDM_SAVESETTINGS,        "Saves settings when you quit Heirloom File Manager"
 
     MH_MYITEMS+IDM_NEWWINDOW,   "Opens a new window"
@@ -1040,24 +1036,6 @@ END
 
 
 
-GOTODIRDLG DIALOGEX 20, 20, 464, 125
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_CLIPCHILDREN | WS_MAXIMIZEBOX
-CAPTION "Goto Directory"
-FONT 8, "MS Shell Dlg"
-BEGIN
-DIALOGRESIZE{ 0, 0 }
-LTEXT           "&Goto Directory:", -1, 6, 3, 100, 8
-DIALOGRESIZECONTROL{ 0, 0, 100, 0 }
-CONTROL         "", IDD_GOTODIR, "edit", ES_LEFT | ES_AUTOHSCROLL | WS_BORDER | WS_TABSTOP | WS_CHILD, 6, 13, 406, 12
-DIALOGRESIZECONTROL{ 0, 0, 100, 100 }
-LISTBOX         IDD_GOTOLIST, 6, 25, 406, 95, WS_VSCROLL | WS_TABSTOP
-
-DIALOGRESIZECONTROL{ 100, 0, 0, 0 }
-DEFPUSHBUTTON   "OK", IDOK, 418, 13, 40, 14, WS_GROUP
-DIALOGRESIZECONTROL{ 100, 3, 0, 0 }
-PUSHBUTTON      "Cancel", IDCANCEL, 418, 30, 40, 14, WS_GROUP
-END
-
 PREFDLG DIALOGEX 20, 20, 235, 113
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Preferences"
@@ -1066,8 +1044,6 @@ BEGIN
     LTEXT           "Editor path:",IDD_TEXT,7,11,39,8
     EDITTEXT        IDD_EDITOR,7,21,217,12,ES_AUTOHSCROLL
     PUSHBUTTON      "Browse...",IDC_EDITOR,175,35,50,14
-    CONTROL         "Create ""&Goto Directory"" index on launch",IDC_GOTO,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,56,148,10
     PUSHBUTTON      "OK",IDOK,119,91,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,175,91,50,14
 END

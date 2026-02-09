@@ -209,7 +209,6 @@
     <ClInclude Include="bookmark.h" />
     <ClInclude Include="gitbash.h" />
     <ClInclude Include="lfn.h" />
-    <ClInclude Include="BagOValues.h" />
     <ClInclude Include="mpr.h" />
     <ClInclude Include="numfmt.h" />
     <ClInclude Include="res.h" />
@@ -233,7 +232,6 @@
     <ClInclude Include="wfdragsrc.h" />
     <ClInclude Include="wfext.h" />
     <ClInclude Include="wfexti.h" />
-    <ClInclude Include="wfgoto.h" />
     <ClInclude Include="wfinfo.h" />
     <ClInclude Include="wfinit.h" />
     <ClInclude Include="wfmem.h" />
@@ -289,7 +287,6 @@
     <ClCompile Include="wfdragsrc.cpp" />
     <ClCompile Include="wfext.cpp" />
     <ClCompile Include="wffile.cpp" />
-    <ClCompile Include="wfgoto.cpp" />
     <ClCompile Include="wfinfo.cpp" />
     <ClCompile Include="wfinit.cpp" />
     <ClCompile Include="wfmem.cpp" />

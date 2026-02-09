@@ -118,10 +118,6 @@ DO_AGAIN:
 
         goto DO_AGAIN;
     }
-
-    // Save CachedPath and GotoCachePunctuation
-    WritePrivateProfileString(kSettings, kCachedPath, szCachedPathIni, szTheINIFile);
-    WritePrivateProfileString(kSettings, kGotoCachePunctuation, szPunctuation, szTheINIFile);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -500,7 +496,6 @@ INT_PTR CALLBACK PrefDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
             GetPrivateProfileString(kSettings, kEditorPath, NULL, szTempEditPath, MAXPATHLEN, szTheINIFile);
             SetDlgItemText(hDlg, IDD_EDITOR, szTempEditPath);
 
-            CheckDlgButton(hDlg, IDC_GOTO, bIndexOnLaunch);
             break;
 
         case WM_COMMAND:
@@ -518,10 +513,6 @@ INT_PTR CALLBACK PrefDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
                 case IDOK:
                     GetDlgItemText(hDlg, IDD_EDITOR, szTempEditPath, MAXPATHLEN);
                     WritePrivateProfileString(kSettings, kEditorPath, szTempEditPath, szTheINIFile);
-
-                    bIndexOnLaunch = IsDlgButtonChecked(hDlg, IDC_GOTO);
-
-                    WritePrivateProfileBool(kIndexOnLaunch, bIndexOnLaunch);
 
                     EndDialog(hDlg, TRUE);
                     break;

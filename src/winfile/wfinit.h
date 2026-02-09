@@ -16,4 +16,3 @@ void InitMenus();
 void LoadFailMessage();
 UINT FillDocType(PPDOCBUCKET ppDoc, LPCWSTR pszSection, LPCWSTR pszDefault);
 BOOL CheckDirExists(LPWSTR szDir);
-DWORD StartBuildingDirectoryTrie();
