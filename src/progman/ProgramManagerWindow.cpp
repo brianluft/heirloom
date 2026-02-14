@@ -6,6 +6,7 @@
 #include "progman/NewShortcutDialog.h"
 #include "progman/AboutDialog.h"
 #include "libprogman/constants.h"
+#include "libheirloom/MdiDpiFixup.h"
 #include "libprogman/window_data.h"
 #include "libprogman/string_util.h"
 #include "libprogman/window_state.h"
@@ -525,6 +526,18 @@ LRESULT ProgramManagerWindow::handleMessage(HWND hwnd, UINT uMsg, WPARAM wParam,
             }
             PostQuitMessage(0);
             return 0;
+
+        case WM_NCPAINT:
+        case WM_NCACTIVATE: {
+            LRESULT result = DefFrameProcW(hwnd, mdiClient_, uMsg, wParam, lParam);
+            libheirloom::redrawMdiMenuBarButtons(hwnd, mdiClient_);
+            return result;
+        }
+
+        case WM_NCLBUTTONDOWN:
+            if (libheirloom::handleMdiMenuBarMouseDown(hwnd, mdiClient_, lParam))
+                return 0;
+            break;
     }
 
     // Use DefFrameProc instead of DefWindowProc for proper MDI handling

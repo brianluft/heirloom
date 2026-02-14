@@ -21,6 +21,7 @@
 #include "stringconstants.h"
 #include "bookmark.h"
 #include "wfminbar.h"
+#include "libheirloom/MdiDpiFixup.h"
 #include <commctrl.h>
 #include <shlobj.h>
 
@@ -764,6 +765,18 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 break;
             }
             /*** FALL THROUGH ***/
+
+        case WM_NCPAINT:
+        case WM_NCACTIVATE: {
+            LRESULT result = DefFrameProc(hwnd, hwndMDIClient, wMsg, wParam, lParam);
+            libheirloom::redrawMdiMenuBarButtons(hwnd, hwndMDIClient);
+            return result;
+        }
+
+        case WM_NCLBUTTONDOWN:
+            if (libheirloom::handleMdiMenuBarMouseDown(hwnd, hwndMDIClient, lParam))
+                return 0;
+            goto DoDefault;
 
         default:
         DoDefault:

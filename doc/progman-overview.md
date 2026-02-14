@@ -51,6 +51,7 @@ The application uses constructor dependency injection with the DI graph construc
   - `string_util` - UTF-8/UTF-16 string conversions
   - `cancel` - Cancellation token system (C#-style)
   - `Error` - Custom exception types
+  - `MdiDpiFixup` (in `libheirloom`) - Redraws MDI menu bar buttons with correctly-scaled glyphs at high DPI
   - `MinimizedWindowListControl` (in `libheirloom`) - Shared base class for minimized window bars
   - `window_data` (forwarded from `libheirloom`) - Associates backing objects with HWNDs
 
