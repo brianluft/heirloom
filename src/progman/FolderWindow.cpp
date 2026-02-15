@@ -452,7 +452,13 @@ LRESULT FolderWindow::handleMessage(HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                             libprogman::Shortcut* shortcut = reinterpret_cast<libprogman::Shortcut*>(lvItem.lParam);
                             if (shortcut) {
-                                shortcut->launch();
+                                try {
+                                    shortcut->launch();
+                                } catch (const std::exception&) {
+                                    MessageBoxW(
+                                        hwnd, L"Failed to open this shortcut.", L"Program Manager",
+                                        MB_OK | MB_ICONERROR);
+                                }
                             }
                         }
                         return 0;
@@ -462,7 +468,12 @@ LRESULT FolderWindow::handleMessage(HWND hwnd, UINT message, WPARAM wParam, LPAR
                         // Handle Enter key press on a shortcut
                         libprogman::Shortcut* shortcut = getSelectedShortcut();
                         if (shortcut) {
-                            shortcut->launch();
+                            try {
+                                shortcut->launch();
+                            } catch (const std::exception&) {
+                                MessageBoxW(
+                                    hwnd, L"Failed to open this shortcut.", L"Program Manager", MB_OK | MB_ICONERROR);
+                            }
                         }
                         return 0;
                     }
@@ -494,13 +505,25 @@ LRESULT FolderWindow::handleMessage(HWND hwnd, UINT message, WPARAM wParam, LPAR
                                 // Handle the selected command
                                 switch (cmd) {
                                     case IDM_OPEN:
-                                        shortcut->launch();
+                                        try {
+                                            shortcut->launch();
+                                        } catch (const std::exception&) {
+                                            MessageBoxW(
+                                                hwnd, L"Failed to open this shortcut.", L"Program Manager",
+                                                MB_OK | MB_ICONERROR);
+                                        }
                                         break;
                                     case IDM_RENAME:
                                         renameSelectedItem();
                                         break;
                                     case IDM_PROPERTIES:
-                                        shortcut->showPropertiesWindow();
+                                        try {
+                                            shortcut->showPropertiesWindow();
+                                        } catch (const std::exception&) {
+                                            MessageBoxW(
+                                                hwnd, L"Failed to show shortcut properties.", L"Program Manager",
+                                                MB_OK | MB_ICONERROR);
+                                        }
                                         break;
                                     case IDM_DELETE:
                                         handleDeleteCommand();

@@ -35,7 +35,13 @@ void Shortcut::showPropertiesWindow() const {
     sei.fMask = SEE_MASK_INVOKEIDLIST;
     sei.nShow = SW_SHOW;
 
-    THROW_IF_FAILED(ShellExecuteExW(&sei) ? S_OK : HRESULT_FROM_WIN32(GetLastError()));
+    if (!ShellExecuteExW(&sei)) {
+        DWORD error = GetLastError();
+        // Silently ignore ERROR_CANCELLED (user declined a UAC elevation prompt, etc.)
+        if (error != ERROR_CANCELLED) {
+            THROW_IF_FAILED(HRESULT_FROM_WIN32(error));
+        }
+    }
 }
 
 void Shortcut::launch() const {
@@ -43,7 +49,13 @@ void Shortcut::launch() const {
     sei.lpFile = path_.c_str();
     sei.nShow = SW_SHOWNORMAL;
 
-    THROW_IF_FAILED(ShellExecuteExW(&sei) ? S_OK : HRESULT_FROM_WIN32(GetLastError()));
+    if (!ShellExecuteExW(&sei)) {
+        DWORD error = GetLastError();
+        // Silently ignore ERROR_CANCELLED (user declined a UAC elevation prompt, etc.)
+        if (error != ERROR_CANCELLED) {
+            THROW_IF_FAILED(HRESULT_FROM_WIN32(error));
+        }
+    }
 }
 
 void Shortcut::deleteFile() const {
