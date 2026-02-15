@@ -43,6 +43,14 @@ IDR_PNG_ICON_15 RCDATA "images\\icon_15.png"
 IDR_PNG_ICON_16 RCDATA "images\\icon_16.png"
 IDR_PNG_ICON_17 RCDATA "images\\icon_17.png"
 
+IDR_PNG_TOOLBAR_00 RCDATA "images\\toolbar_list.png"
+IDR_PNG_TOOLBAR_01 RCDATA "images\\toolbar_details.png"
+IDR_PNG_TOOLBAR_02 RCDATA "images\\toolbar_sort_name.png"
+IDR_PNG_TOOLBAR_03 RCDATA "images\\toolbar_sort_type.png"
+IDR_PNG_TOOLBAR_04 RCDATA "images\\toolbar_sort_size.png"
+IDR_PNG_TOOLBAR_05 RCDATA "images\\toolbar_sort_date_newest.png"
+IDR_PNG_TOOLBAR_06 RCDATA "images\\toolbar_sort_date_oldest.png"
+IDR_PNG_TOOLBAR_07 RCDATA "images\\toolbar_new_window.png"
 
 
 APPICON     ICON   PRELOAD "images\\app.ico"
@@ -225,7 +233,7 @@ BEGIN
     MENUITEM    "Sort by &date (newest first)",  IDM_BYDATE
     MENUITEM    "Sort by date (oldest &first)",  IDM_BYFDATE
     MENUITEM    SEPARATOR
-    MENUITEM    "&Drivebar",                IDM_DRIVEBAR
+    MENUITEM    "&Toolbar",                  IDM_DRIVEBAR
     MENUITEM    "S&tatus bar",              IDM_STATUSBAR
     END
     POPUP       "&Bookmarks"
@@ -644,7 +652,7 @@ BEGIN
 
     MH_MYITEMS+IDM_OPTIONS,     "Changes Heirloom File Manager options"
 
-    MH_MYITEMS+IDM_DRIVEBAR,    "Displays or hides the drivebar"
+    MH_MYITEMS+IDM_DRIVEBAR,    "Displays or hides the toolbar"
     MH_MYITEMS+IDM_STATUSBAR,   "Displays or hides the status bar"
     MH_MYITEMS+IDM_NEWWINONCONNECT,     "Opens a new window when you connect"
 

@@ -16,7 +16,9 @@ Unlike progman's clean separation of UI and business logic, winfile uses a tradi
 ### Window Structure Hierarchy
 ```
 Frame Window (FrameWndProc) - hwndFrame
-├── Drive Bar (DrivesWndProc) - hwndDriveBar
+├── Toolbar (DrivesWndProc) - hwndDriveBar
+│   ├── Location ComboBoxEx (WC_COMBOBOXEX) - hwndDriveList
+│   └── Toolbar Control (TOOLBARCLASSNAME) - view/sort/new window buttons
 ├── MDI Client - hwndMDIClient
 │   ├── Tree Window (TreeWndProc) - Multiple instances
 │   │   ├── Tree Control (TreeControlWndProc) - hwndTree
@@ -91,12 +93,16 @@ Frame Window (FrameWndProc) - hwndFrame
 
 ### Drive and Hardware Layer
 
-#### Drive Management (`wfdrives.cpp`)
+#### Drive Management and Toolbar (`wfdrives.cpp`)
+- **Toolbar** - Standard Win32 toolbar replacing the old drive bar, containing:
+  - **Location Combobox** (COMBOBOXEX) - Drive letter dropdown with drive type icons; edit field accepts arbitrary paths with Enter to navigate
+  - **View Radio Group** - List/Details toggle buttons (TBSTYLE_CHECKGROUP) synced with active MDI child's view mode
+  - **Sort Radio Group** - Name/Type/Size/Date Newest/Date Oldest toggle buttons synced with active MDI child's sort mode
+  - **New Window Button** - Opens a new MDI child window
 - **Drive Detection** - Dynamic drive enumeration and type identification
-- **Drive Bar Display** - Visual drive selection interface with status indicators
 - **Network Drive Support** - UNC path handling and connection management
 - **Removable Media** - Floppy disk and CD-ROM handling with validation
-- **Drive Status Tracking** - Available/unavailable state management
+- **Toolbar State Sync** - `UpdateToolbarState()` syncs button/combobox state with the active MDI child; `RefreshToolbarDriveList()` rebuilds the drive combobox when drives change
 
 #### Hardware Integration (`wfutil.cpp`)
 - **Path Utilities** - Comprehensive path manipulation and validation
@@ -112,7 +118,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Accelerator Keys** - Keyboard shortcut handling and conflicts
 - **Menu State Management** - Enable/disable states based on current selection
 - **Extension Support** - Third-party menu extension integration
-- **Menu Structure** - File, Edit, View (with Drivebar/Status bar toggles), Tools (Search, Empty recycle bin, Options dialog), Bookmarks, Window, Help
+- **Menu Structure** - File, Edit, View (with Toolbar/Status bar toggles), Tools (Search, Empty recycle bin, Options dialog), Bookmarks, Window, Help
 - **ZIP Archive Submenu** - Archive creation and extraction commands with selection-based enabling
   - **Smart Naming** - "Add to Zip" command uses improved logic to name archives after the containing folder, with fallback handling for root paths
   - **Path Handling** - Proper path construction prevents double backslashes in archive file paths
@@ -166,7 +172,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Multiple Windows** - MDI interface supporting up to 27 concurrent windows
 - **Window Minimization** - Minimized MDI children appear as icons in a bottom bar (simulating Windows 3.11 behavior), double-click to restore
 - **Customizable Views** - Name-only, detailed, with configurable columns and sorting; all files are always shown (no file type filtering)
-- **Drive Bar** - Visual drive selection with status indicators
+- **Toolbar** - Standard toolbar with location combobox, view/sort radio buttons, and new window button
 - **Search Interface** - Integrated search with real-time results and progress
 
 ### File System Integration

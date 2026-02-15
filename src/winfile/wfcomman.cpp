@@ -73,6 +73,7 @@ void RedoDriveWindows(HWND hwndActive) {
 
     iCurDrive = (int)GetWindowLongPtr(hwndActive, GWL_TYPE);
 
+    RefreshToolbarDriveList();
     MDIClientSizeChange(hwndActive, DRIVEBAR_FLAG);
 }
 
@@ -796,10 +797,19 @@ BOOL AppCommandProc(DWORD id) {
             }
             break;
 
-        case IDM_OPEN:
-
-            if (GetFocus() == hwndDriveList)
-                break; /* user hit Enter in drive list */
+        case IDM_OPEN: {
+            HWND hwndFocus = GetFocus();
+            if (hwndDriveList && (hwndFocus == hwndDriveList || IsChild(hwndDriveList, hwndFocus))) {
+                // User pressed Enter in location combo - navigate to typed path
+                HWND hwndEdit = (HWND)SendMessage(hwndDriveList, CBEM_GETEDITCONTROL, 0, 0);
+                if (hwndEdit) {
+                    WCHAR szPath[MAXPATHLEN];
+                    GetWindowTextW(hwndEdit, szPath, COUNTOF(szPath));
+                    if (szPath[0])
+                        NavigateToPath(szPath);
+                }
+                break;
+            }
 
             if (GetKeyState(VK_MENU) < 0)
                 PostMessage(hwndFrame, WM_COMMAND, GET_WM_COMMAND_MPS(IDM_ATTRIBS, 0, 0));
@@ -809,6 +819,7 @@ BOOL AppCommandProc(DWORD id) {
                 OpenOrEditSelection(hwndActive, FALSE);
             }
             break;
+        }
 
         case IDM_EDIT:
             TypeAheadString('\0', NULL);
@@ -1785,6 +1796,8 @@ BOOL AppCommandProc(DWORD id) {
                     (viewFlags != VIEW_NAMEONLY && viewFlags != VIEW_EVERYTHING) ? MF_CHECKED : MF_UNCHECKED);
                 DrawMenuBar(hwndFrame);
             }
+
+            UpdateToolbarState(hwndActive);
 
             break;
 

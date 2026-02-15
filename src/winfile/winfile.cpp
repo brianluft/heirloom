@@ -94,7 +94,6 @@ void ResizeControls() {
     };
 
     RECT rc;
-    int cDrivesPerRow;
     int dyDriveBar;
 
     //
@@ -115,11 +114,8 @@ void ResizeControls() {
     GetEffectiveClientRect(hwndFrame, &rc, nViews);
     rc.right -= rc.left;
 
-    cDrivesPerRow = rc.right / dxDrive;
-    if (!cDrivesPerRow)
-        cDrivesPerRow++;
-
-    dyDriveBar = dyDrive * ((cDrives + cDrivesPerRow - 1) / cDrivesPerRow) + 2 * dyBorder;
+    UINT dpi = GetDpiForWindow(hwndFrame);
+    dyDriveBar = ScaleValueForDpi(30, dpi) + 2 * dyBorder;
 
     rc.right += 2 * dyBorder;
 
@@ -718,11 +714,12 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
         break;
 
-        case WM_SYSCOMMAND:
-            if (GetFocus() == hwndDriveList)
+        case WM_SYSCOMMAND: {
+            HWND hwndFocus = GetFocus();
+            if (hwndDriveList && (hwndFocus == hwndDriveList || IsChild(hwndDriveList, hwndFocus)))
                 SendMessage(hwndDriveList, CB_SHOWDROPDOWN, FALSE, 0L);
             return DefFrameProc(hwnd, hwndMDIClient, wMsg, wParam, lParam);
-            break;
+        } break;
 
         case WM_ENDSESSION:
 

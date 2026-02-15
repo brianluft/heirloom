@@ -15,10 +15,12 @@ typedef struct {
 
 #define NUM_DRIVE_PNGS 6
 #define NUM_ICON_PNGS 18
+#define NUM_TOOLBAR_PNGS 8
 
 static BOOL s_initialized = FALSE;
 static PNG_BITMAP s_drivePNGs[NUM_DRIVE_PNGS];
 static PNG_BITMAP s_iconPNGs[NUM_ICON_PNGS];
+static PNG_BITMAP s_toolbarPNGs[NUM_TOOLBAR_PNGS];
 
 static HGLOBAL LoadPNGResource(HINSTANCE hInst, WORD id, DWORD* pcb) {
     HRSRC hrsrc = FindResourceW(hInst, MAKEINTRESOURCEW(id),
@@ -173,6 +175,10 @@ void PngStartup() {
         CreateBitmapFromPNGRes(hInst, IDR_PNG_ICON_00 + i, &s_iconPNGs[i]);
     }
 
+    for (int i = 0; i < NUM_TOOLBAR_PNGS; i++) {
+        CreateBitmapFromPNGRes(hInst, IDR_PNG_TOOLBAR_00 + i, &s_toolbarPNGs[i]);
+    }
+
     s_initialized = TRUE;
 }
 
@@ -195,6 +201,13 @@ void PngShutdown() {
         }
     }
 
+    for (int i = 0; i < NUM_TOOLBAR_PNGS; i++) {
+        DeleteObject(s_toolbarPNGs[i].hbmOrig);
+        if (s_toolbarPNGs[i].hbmScaled) {
+            DeleteObject(s_toolbarPNGs[i].hbmScaled);
+        }
+    }
+
     s_initialized = FALSE;
 }
 
@@ -210,6 +223,9 @@ void PngDraw(HDC hdc, UINT dpi, int x, int y, PNG_TYPE type, int index) {
             break;
         case PNG_TYPE_ICON:
             png = &s_iconPNGs[index];
+            break;
+        case PNG_TYPE_TOOLBAR:
+            png = &s_toolbarPNGs[index];
             break;
         default:
             return;
@@ -244,4 +260,35 @@ void PngDraw(HDC hdc, UINT dpi, int x, int y, PNG_TYPE type, int index) {
     }
 
     DeleteDC(hdcMemScaled);
+}
+
+void PngGetScaledSize(UINT dpi, PNG_TYPE type, int index, UINT* cx, UINT* cy) {
+    if (!s_initialized) {
+        *cx = *cy = 0;
+        return;
+    }
+
+    PNG_BITMAP* png = NULL;
+    switch (type) {
+        case PNG_TYPE_DRIVE:
+            png = &s_drivePNGs[index];
+            break;
+        case PNG_TYPE_ICON:
+            png = &s_iconPNGs[index];
+            break;
+        case PNG_TYPE_TOOLBAR:
+            png = &s_toolbarPNGs[index];
+            break;
+        default:
+            *cx = *cy = 0;
+            return;
+    }
+
+    if (!EnsureScaledForDpi(png, dpi)) {
+        *cx = *cy = 0;
+        return;
+    }
+
+    *cx = png->scaledCX;
+    *cy = png->scaledCY;
 }

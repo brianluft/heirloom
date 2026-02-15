@@ -14,6 +14,7 @@
 #include "wfdos.h"
 #include "wfutil.h"
 #include "wfinit.h"
+#include "wfdrives.h"
 #include <commctrl.h>
 
 #define U_HEAD(type)             \
@@ -1258,8 +1259,6 @@ WFGetConnection(DRIVE drive, LPWSTR* ppPath, BOOL bConvertClosed, DWORD dwType) 
 void UpdateDriveListComplete() {
     HWND hwnd, hwndNext;
     DRIVE drive;
-    DRIVEIND driveInd;
-    int CurSel;
     WCHAR szPath[2 * MAXPATHLEN];
     LPWSTR lpszVol, lpszOldVol;
 
@@ -1314,21 +1313,7 @@ void UpdateDriveListComplete() {
     //
     // Redo all of the drives.
     //
-    if (hwndDriveList) {
-        SendMessage(hwndDriveList, WM_SETREDRAW, FALSE, 0);
-        CurSel = (int)SendMessage(hwndDriveList, CB_GETCURSEL, 0, 0);
-        for (driveInd = 0; driveInd < cDrives; driveInd++) {
-            if (aDriveInfo[rgiDrive[driveInd]].dwLines[ALTNAME_MULTI] != 1) {
-                SendMessage(hwndDriveList, CB_DELETESTRING, driveInd, 0);
-                SendMessage(hwndDriveList, CB_INSERTSTRING, driveInd, rgiDrive[driveInd]);
-            }
-        }
-        SendMessage(hwndDriveList, CB_SETCURSEL, CurSel, 0);
-        SendMessage(hwndDriveList, WM_SETREDRAW, TRUE, 0);
-
-        InvalidateRect(hwndDriveList, NULL, TRUE);
-        UpdateWindow(hwndDriveList);
-    }
+    RefreshToolbarDriveList();
 }
 
 void UpdateDriveList() {

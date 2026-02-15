@@ -252,17 +252,13 @@ BOOL ResizeSplit(HWND hwnd, int dxSplit) {
 
 void SwitchDriveSelection(HWND hwndChild) {
     DRIVE drive;
-    DRIVEIND i, driveIndOld, driveIndOldFocus;
-    RECT rc;
+    DRIVEIND i;
 
     drive = (DRIVE)GetWindowLongPtr(hwndChild, GWL_TYPE);
 
     if (TYPE_SEARCH == drive) {
         drive = (DRIVE)SendMessage(hwndSearch, FS_GETDRIVE, 0, 0L) - CHAR_A;
     }
-
-    driveIndOld = (DRIVEIND)GetWindowLongPtr(hwndDriveBar, GWL_CURDRIVEIND);
-    driveIndOldFocus = (DRIVEIND)GetWindowLongPtr(hwndDriveBar, GWL_CURDRIVEFOCUS);
 
     for (i = 0; i < cDrives; i++) {
         if (rgiDrive[i] == drive) {
@@ -278,23 +274,7 @@ void SwitchDriveSelection(HWND hwndChild) {
                  // other code (such as tree walk) will handle
 
     if (bDriveBar) {
-        //
-        // Optimization: don't invalidate whole drive bar, just the
-        // two drives that change.
-        //
-        // was: InvalidateRect(hwndDriveBar, NULL, TRUE);
-        //
-
-        GetDriveRect(i, &rc);
-        InvalidateRect(hwndDriveBar, &rc, TRUE);
-
-        GetDriveRect(driveIndOld, &rc);
-        InvalidateRect(hwndDriveBar, &rc, TRUE);
-
-        GetDriveRect(driveIndOldFocus, &rc);
-        InvalidateRect(hwndDriveBar, &rc, TRUE);
-
-        UpdateWindow(hwndDriveBar);
+        UpdateToolbarState(hwndChild);
     }
 }
 

@@ -1,14 +1,3 @@
-/********************************************************************
-
-   wfdrives.c
-
-   window procs and other stuff for the drive bar
-
-   Copyright (c) Microsoft Corporation. All rights reserved.
-   Licensed under the MIT License.
-
-********************************************************************/
-
 #define PUBLIC  // avoid collision with shell.h
 #include "winfile.h"
 #include "treectl.h"
@@ -20,16 +9,53 @@
 #include "wfdir.h"
 #include "wftree.h"
 #include "wfdrives.h"
+#include "wfdpi.h"
 #include "stringconstants.h"
 #include <commctrl.h>
 #include <shlobj.h>
 
-void RectDrive(DRIVEIND driveInd, BOOL bDraw);
-void InvalidateDrive(DRIVEIND driveInd);
-int DriveFromPoint(HWND hwnd, POINT pt);
-void DrawDrive(HDC hdc, UINT dpi, int x, int y, DRIVEIND driveInd, BOOL bCurrent, BOOL bFocus);
-int KeyToItem(HWND hWnd, WORD nDriveLetter);
-int GetDragStatusText(int iOperation);
+// Toolbar PNG indices (order matches IDR_PNG_TOOLBAR_00..07)
+#define TBAR_IMG_LIST 0
+#define TBAR_IMG_DETAILS 1
+#define TBAR_IMG_SORT_NAME 2
+#define TBAR_IMG_SORT_TYPE 3
+#define TBAR_IMG_SORT_SIZE 4
+#define TBAR_IMG_SORT_DATE_NEWEST 5
+#define TBAR_IMG_SORT_DATE_OLDEST 6
+#define TBAR_IMG_NEW_WINDOW 7
+#define TBAR_IMG_COUNT 8
+
+// Control IDs for child windows within the toolbar
+#define IDC_TOOLBAR_BUTTONS 3010
+#define IDC_LOCATION_COMBO 3011
+
+// Internal toolbar child windows
+static HWND hwndToolbarCtrl = NULL;
+static HWND hwndLocationCombo = NULL;
+static HIMAGELIST himlDriveIcons = NULL;
+
+// Button definitions for the toolbar
+static const struct {
+    int idm;       // command ID (0 = separator)
+    int imgIndex;  // toolbar PNG index (-1 = separator)
+    BYTE style;    // TBSTYLE_*
+    BYTE group;    // 0=none, 1=view, 2=sort
+} toolbarButtons[] = {
+    { IDM_VNAME, TBAR_IMG_LIST, TBSTYLE_CHECKGROUP, 1 },
+    { IDM_VDETAILS, TBAR_IMG_DETAILS, TBSTYLE_CHECKGROUP, 1 },
+    { 0, -1, TBSTYLE_SEP, 0 },
+    { IDM_BYNAME, TBAR_IMG_SORT_NAME, TBSTYLE_CHECKGROUP, 2 },
+    { IDM_BYTYPE, TBAR_IMG_SORT_TYPE, TBSTYLE_CHECKGROUP, 2 },
+    { IDM_BYSIZE, TBAR_IMG_SORT_SIZE, TBSTYLE_CHECKGROUP, 2 },
+    { IDM_BYDATE, TBAR_IMG_SORT_DATE_NEWEST, TBSTYLE_CHECKGROUP, 2 },
+    { IDM_BYFDATE, TBAR_IMG_SORT_DATE_OLDEST, TBSTYLE_CHECKGROUP, 2 },
+    { 0, -1, TBSTYLE_SEP, 0 },
+    { IDM_NEWWINDOW, TBAR_IMG_NEW_WINDOW, TBSTYLE_BUTTON, 0 },
+};
+#define NUM_TOOLBAR_BUTTONS (sizeof(toolbarButtons) / sizeof(toolbarButtons[0]))
+
+static void PopulateLocationCombo();
+static void CreateDriveImageList(UINT dpi);
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -40,17 +66,6 @@ int GetDragStatusText(int iOperation);
 //
 // IN        drive    Drive number to create window for
 // IN        hwndSrc  Base properties on this window
-//
-//
-// Return:
-//
-//
-// Assumes:
-//
-// Effects:
-//
-//
-// Notes:
 //
 /////////////////////////////////////////////////////////////////////
 
@@ -85,14 +100,10 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
 
         //
         // Update volume label here too if removable
-        // This is broken since we may steal stale data from another window.
-        // But this is what winball does and there's no simpler solution.
         //
         if (IsRemovableDrive(drive)) {
             R_VolInfo(drive);
         }
-
-        // TODO: if directory in right pane, get that instead of directory in left pane
 
         if (hwndSrc) {
             GetSelectedDirectory(drive + 1, szDir);
@@ -111,12 +122,6 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
         if (!bDir) {
             RemoveLast(szDir);
 
-            //
-            // pszInitialSel is a global used to pass initial state:
-            // currently selected item in the dir part of the window
-            //
-            // Freed by caller
-            //
             psz = pszSearchDir + lstrlen(szDir) + 1;
 
             pszInitialDirSel = (LPWSTR)LocalAlloc(LMEM_FIXED, ByteCountOf(lstrlen(psz) + 1));
@@ -146,7 +151,6 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
 
     //
     // take all the attributes from the current window
-    // (except the filespec, we may want to change this)
     //
     if (hwndSrc) {
         dwNewSort = (DWORD)GetWindowLongPtr(hwndSrc, GWL_SORT);
@@ -161,196 +165,18 @@ void NewTree(DRIVE drive, HWND hwndSrc) {
     if (hwnd && (hwndTree = HasTreeWindow(hwnd)))
         SendMessage(hwndTree, TC_SETDRIVE, MAKELONG(MAKEWORD(FALSE, 0), TRUE), 0L);
 
-    //
-    // Cleanup
-    //
     if (pszSearchDir)
         LocalFree((HLOCAL)pszSearchDir);
 }
 
-//
-// assumes drive bar is visible.
-//
-
-void GetDriveRect(DRIVEIND driveInd, PRECT prc) {
-    RECT rc;
-    int nDrivesPerRow;
-
-    GetClientRect(hwndDriveBar, &rc);
-
-    if (!dxDrive)  // avoid div by zero
-        dxDrive++;
-
-    nDrivesPerRow = rc.right / dxDrive;
-
-    if (!nDrivesPerRow)  // avoid div by zero
-        nDrivesPerRow++;
-
-    prc->top = dyDrive * (driveInd / nDrivesPerRow);
-    prc->bottom = prc->top + dyDrive;
-
-    prc->left = dxDrive * (driveInd % nDrivesPerRow);
-    prc->right = prc->left + dxDrive;
-}
-
-int DriveFromPoint(HWND hwnd, POINT pt) {
-    RECT rc, rcDrive;
-    int x, y;
-
-    DRIVEIND driveInd;
-
-    if (!bDriveBar || hwnd != hwndDriveBar)
-        return -1;
-
-    GetClientRect(hwndDriveBar, &rc);
-
-    x = 0;
-    y = 0;
-    driveInd = 0;
-
-    for (driveInd = 0; driveInd < cDrives; driveInd++) {
-        rcDrive.left = x;
-        rcDrive.right = x + dxDrive;
-        rcDrive.top = y;
-        rcDrive.bottom = y + dyDrive;
-        InflateRect(&rcDrive, -dyBorder, -dyBorder);
-
-        if (PtInRect(&rcDrive, pt))
-            return driveInd;
-
-        x += dxDrive;
-
-        if (x + dxDrive > rc.right) {
-            x = 0;
-            y += dyDrive;
-        }
-    }
-
-    return -1;  // no hit
-}
-
-void InvalidateDrive(DRIVEIND driveInd) {
-    RECT rc;
-
-    //
-    // Get out early if the drivebar is not visible.
-    //
-    if (!bDriveBar)
-        return;
-
-    GetDriveRect(driveInd, &rc);
-    InvalidateRect(hwndDriveBar, &rc, TRUE);
-}
-
-//
-// void NEAR PASCAL RectDrive(DRIVEIND driveInd, BOOL bDraw)
-//
-// draw the highlight rect around the drive to indicate that it is
-// the target of a drop action.
-//
-// in:
-//      nDrive  the drive to draw the rect around
-//      bDraw   if TRUE, draw a rect around this drive
-//              FALSE, erase the rect (draw the default rect)
-//
-
-void RectDrive(DRIVEIND driveInd, BOOL bDraw) {
-    RECT rc, rcDrive;
-    HBRUSH hBrush;
-    HDC hdc;
-
-    GetDriveRect(driveInd, &rc);
-    rcDrive = rc;
-    InflateRect(&rc, -dyBorder, -dyBorder);
-
-    if (bDraw) {
-        hdc = GetDC(hwndDriveBar);
-
-        if (hBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOWTEXT))) {
-            FrameRect(hdc, &rc, hBrush);
-            DeleteObject(hBrush);
-        }
-
-        ReleaseDC(hwndDriveBar, hdc);
-
-    } else {
-        InvalidateRect(hwndDriveBar, &rcDrive, TRUE);
-        UpdateWindow(hwndDriveBar);
-    }
-}
-
-//
-// void DrawDrive(HDC hdc, int x, int y, int nDrive, BOOL bCurrent, BOOL bFocus)
-//
-// paint the drive icons in the standard state, given the
-// drive with the focus and the current selection
-//
-// in:
-//      hdc             dc to draw to
-//      dpi             window DPI
-//      x, y            position to start (dxDrive, dyDrive are the extents)
-//      nDrive          the drive to paint
-//      bCurrent        draw as the current drive (pushed in)
-//      bFocus          draw with the focus
-//
-
-void DrawDrive(HDC hdc, UINT dpi, int x, int y, DRIVEIND driveInd, BOOL bCurrent, BOOL bFocus) {
-    RECT rc;
-    WCHAR szTemp[2];
-    DWORD rgb;
-    DRIVE drive;
-
-    drive = rgiDrive[driveInd];
-
-    rc.left = x;
-    rc.right = x + dxDrive;
-    rc.top = y;
-    rc.bottom = y + dyDrive;
-
-    rgb = GetSysColor(COLOR_BTNTEXT);
-
-    if (bCurrent) {
-        HBRUSH hbr;
-
-        if (hbr = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT))) {
-            if (bFocus) {
-                rgb = GetSysColor(COLOR_HIGHLIGHTTEXT);
-                FillRect(hdc, &rc, hbr);
-            } else {
-                InflateRect(&rc, -dyBorder, -dyBorder);
-                FrameRect(hdc, &rc, hbr);
-            }
-            DeleteObject(hbr);
-        }
-    }
-
-    if (bFocus)
-        DrawFocusRect(hdc, &rc);
-
-    szTemp[0] = (WCHAR)(chFirstDrive + rgiDrive[driveInd]);
-    SetBkMode(hdc, TRANSPARENT);
-
-    rgb = SetTextColor(hdc, rgb);
-    TextOut(hdc, x + dxDriveBitmap + (dyBorder * 6), y + (dyDrive - dyText) / 2, szTemp, 1);
-    SetTextColor(hdc, rgb);
-
-    PngDraw(hdc, dpi, x + 4 * dyBorder, y + (dyDrive - dyDriveBitmap) / 2, PNG_TYPE_DRIVE, aDriveInfo[drive].iOffset);
-}
-
 // check net/floppy drives for validity, sets the net drive bitmap
 // when the thing is not available
-//
-// note: IsTheDiskReallyThere() has the side effect of setting the
-// current drive to the new disk if it is successful
 
 BOOL CheckDrive(HWND hwnd, DRIVE drive, DWORD dwFunc) {
     DWORD err;
     DRIVEIND driveInd;
     HCURSOR hCursor;
     WCHAR szDrive[] = SZ_ACOLON;
-
-    // Put up the hourglass cursor since this
-    // could take a long time
 
     hCursor = LoadCursor(NULL, IDC_WAIT);
 
@@ -361,7 +187,6 @@ BOOL CheckDrive(HWND hwnd, DRIVE drive, DWORD dwFunc) {
     DRIVESET(szDrive, drive);
 
     // find index for this drive
-
     driveInd = 0;
     while ((driveInd < cDrives) && (rgiDrive[driveInd] != drive))
         driveInd++;
@@ -375,21 +200,14 @@ BOOL CheckDrive(HWND hwnd, DRIVE drive, DWORD dwFunc) {
                 R_NetCon(drive);
 
             } else {
-                //
-                // Not valid, so change it back to a remote connection
-                //
                 aDriveInfo[drive].uType = DRIVE_REMOTE;
 
-                //
-                // Wait for background wait net
-                //
                 WAITNET();
 
                 err = WNetRestoreSingleConnection(hwnd, szDrive, TRUE);
 
                 if (err != WN_SUCCESS) {
                     aDriveInfo[drive].iOffset = 5;
-                    InvalidateDrive(driveInd);
 
                     if (hCursor)
                         SetCursor(hCursor);
@@ -397,19 +215,6 @@ BOOL CheckDrive(HWND hwnd, DRIVE drive, DWORD dwFunc) {
 
                     return FALSE;
                 }
-
-                //
-                // The safest thing to do is U_NetCon, since we've
-                // just re-established our connection.  For quickness,
-                // however, we'll just reset the return value of U_NetCon
-                // to indicate that we're reconnected (and C_ close it).
-                //
-                // This is also safe since WNetRestoreConnection returns no
-                // error and the drive name should not change since we last
-                // read it.  -- UNLESS the user creates a new disconnected
-                // remembered drive over the old one.  Difficult to do without
-                // hitting the registry directly.
-                //
 
                 C_NetCon(drive, ERROR_SUCCESS);
             }
@@ -421,7 +226,6 @@ BOOL CheckDrive(HWND hwnd, DRIVE drive, DWORD dwFunc) {
         case 1:
 
             aDriveInfo[drive].iOffset = 4;
-            InvalidateDrive(driveInd);
             break;
 
         default:
@@ -433,60 +237,6 @@ BOOL CheckDrive(HWND hwnd, DRIVE drive, DWORD dwFunc) {
     ShowCursor(FALSE);
 
     return IsTheDiskReallyThere(hwnd, szDrive, dwFunc, FALSE);
-}
-
-// Old Win3.x style DrivesDropObject function removed (DROPSTRUCT based implementation)
-
-void DrivesPaint(HWND hWnd, int nDriveFocus, int nDriveCurrent) {
-    RECT rc;
-    int nDrive;
-
-    HDC hdc;
-    PAINTSTRUCT ps;
-
-    int x, y;
-    HANDLE hOld;
-    int cDriveRows, cDrivesPerRow;
-
-    UINT dpi = GetDpiForWindow(hWnd);
-
-    GetClientRect(hWnd, &rc);
-
-    hdc = BeginPaint(hWnd, &ps);
-
-    if (!rc.right) {
-        EndPaint(hWnd, &ps);
-        return;
-    }
-
-    hOld = SelectObject(hdc, hFont);
-
-    cDrivesPerRow = rc.right / dxDrive;
-
-    if (!cDrivesPerRow)
-        cDrivesPerRow++;
-
-    cDriveRows = ((cDrives - 1) / cDrivesPerRow) + 1;
-
-    x = 0;
-    y = 0;
-    for (nDrive = 0; nDrive < cDrives; nDrive++) {
-        if (GetFocus() != hWnd)
-            nDriveFocus = -1;
-
-        DrawDrive(hdc, dpi, x, y, nDrive, nDriveCurrent == nDrive, nDriveFocus == nDrive);
-        x += dxDrive;
-
-        if (x + dxDrive > rc.right) {
-            x = 0;
-            y += dyDrive;
-        }
-    }
-
-    if (hOld)
-        SelectObject(hdc, hOld);
-
-    EndPaint(hWnd, &ps);
 }
 
 //
@@ -504,20 +254,12 @@ void DrivesSetDrive(HWND hWnd, DRIVEIND driveInd, DRIVEIND driveIndCur, BOOL bDo
 
     hwndChild = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
 
-    InvalidateRect(hWnd, NULL, TRUE);
-
     //
-    // save the current directory on this drive for later so
-    // we don't have to hit the drive to get the current directory
-    // and other apps won't change this out from under us
+    // save the current directory on this drive for later
     //
-
     GetSelectedDirectory(0, szPath);
     SaveDirectory(szPath);
 
-    //
-    // this also sets the current drive if successful
-    //
     drive = rgiDrive[driveInd];
 
     I_NetCon(drive);
@@ -526,45 +268,19 @@ void DrivesSetDrive(HWND hWnd, DRIVEIND driveInd, DRIVEIND driveIndCur, BOOL bDo
     if (!CheckDrive(hWnd, drive, FUNC_SETDRIVE))
         return;
 
-    //
-    // cause current tree read to abort if already in progress
-    //
     hwndTree = HasTreeWindow(hwndChild);
 
     if (hwndTree && GetWindowLongPtr(hwndTree, GWL_READLEVEL)) {
-        //
-        // bounce any clicks on a drive that is currently being read
-        //
-
         if (driveInd != driveIndCur)
             bCancelTree = TRUE;
         return;
     }
 
-    //
-    // do again after in case a dialog cause the drive bar
-    // to repaint
-    //
-    InvalidateRect(hWnd, NULL, TRUE);
-
-    //
-    // get this from our cache if possible
-    //
     GetSelectedDirectory((drive + 1), szPath);
 
-    //
-    // set the drives window parameters and repaint
-    //
     SetWindowLongPtr(hWnd, GWL_CURDRIVEIND, driveInd);
     SetWindowLongPtr(hWnd, GWL_CURDRIVEFOCUS, driveInd);
 
-    // NOTE: similar to CreateDirWindow
-
-    //
-    // reset the dir first to allow tree to steal data
-    // if szPath is not valid the TC_SETDRIVE will reinit
-    // the files half (if there is no tree we have a problem)
-    //
     if (hwndDir = HasDirWindow(hwndChild)) {
         UINT iStrLen;
         AddBackslash(szPath);
@@ -577,291 +293,446 @@ void DrivesSetDrive(HWND hWnd, DRIVEIND driveInd, DRIVEIND driveIndCur, BOOL bDo
         StripFilespec(szPath);
     }
 
-    //
-    // do this before TC_SETDRIVE in case the tree read
-    // is aborted and lFreeSpace gets set to -2L
-    //
-    // Was -1L, ignore new cache.
-    //
-    SPC_SET_HITDISK(qFreeSpace);  // force status info refresh
+    SPC_SET_HITDISK(qFreeSpace);
 
-    //
-    // tell the tree control to do it's thing
-    //
     if (hwndTree) {
         SendMessage(hwndTree, TC_SETDRIVE, MAKEWORD(GetKeyState(VK_SHIFT) < 0, bDontSteal), (LPARAM)(szPath));
     } else {
-        // at least resize things
         RECT rc;
         GetClientRect(hwndChild, &rc);
         ResizeWindows(hwndChild, (WORD)(rc.right + 1), (WORD)(rc.bottom + 1));
     }
 
+    if (bDriveBar) {
+        UpdateToolbarState(hwndChild);
+    }
+
     UpdateStatus(hwndChild);
+}
+
+//
+// Layout metrics for toolbar child controls.
+//
+struct ToolbarMetrics {
+    int padding;
+    int leftMargin;
+    int sepWidth;
+    int comboWidth;
+    int comboHeight;
+    int spacing;
+    int toolbarX;
+};
+
+static ToolbarMetrics GetToolbarMetrics(UINT dpi) {
+    ToolbarMetrics m;
+    m.padding = ScaleValueForDpi(4, dpi);
+    m.leftMargin = ScaleValueForDpi(4, dpi);
+    m.sepWidth = ScaleValueForDpi(8, dpi);
+    m.comboWidth = ScaleValueForDpi(60, dpi);
+    m.comboHeight = ScaleValueForDpi(200, dpi);
+    m.spacing = ScaleValueForDpi(8, dpi);
+    m.toolbarX = m.leftMargin + m.comboWidth + m.spacing;
+    return m;
+}
+
+//
+// Render PNG images into an HIMAGELIST for use in toolbar/combo controls.
+//
+static HIMAGELIST CreatePngImageList(UINT dpi, PNG_TYPE type, int count, UINT iconCX, UINT iconCY) {
+    HIMAGELIST himl = ImageList_Create(iconCX, iconCY, ILC_COLOR32, count, 0);
+
+    HDC hdcScreen = GetDC(NULL);
+    HDC hdcMem = CreateCompatibleDC(hdcScreen);
+
+    for (int i = 0; i < count; i++) {
+        BITMAPINFO bi = {};
+        bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+        bi.bmiHeader.biWidth = iconCX;
+        bi.bmiHeader.biHeight = -((LONG)iconCY);  // top-down
+        bi.bmiHeader.biPlanes = 1;
+        bi.bmiHeader.biBitCount = 32;
+        bi.bmiHeader.biCompression = BI_RGB;
+
+        void* pvBits;
+        HBITMAP hbm = CreateDIBSection(hdcScreen, &bi, DIB_RGB_COLORS, &pvBits, NULL, 0);
+        if (hbm) {
+            HGDIOBJ hOld = SelectObject(hdcMem, hbm);
+            memset(pvBits, 0, iconCX * iconCY * 4);
+            PngDraw(hdcMem, dpi, 0, 0, type, i);
+            SelectObject(hdcMem, hOld);
+            ImageList_Add(himl, hbm, NULL);
+            DeleteObject(hbm);
+        }
+    }
+
+    DeleteDC(hdcMem);
+    ReleaseDC(NULL, hdcScreen);
+    return himl;
+}
+
+//
+// Build the drive icon image list for the location combo box.
+//
+static void CreateDriveImageList(UINT dpi) {
+    UINT iconCX, iconCY;
+    PngGetScaledSize(dpi, PNG_TYPE_DRIVE, 0, &iconCX, &iconCY);
+    if (iconCX == 0)
+        iconCX = iconCY = 16;
+
+    if (himlDriveIcons) {
+        ImageList_Destroy(himlDriveIcons);
+    }
+
+    himlDriveIcons = CreatePngImageList(dpi, PNG_TYPE_DRIVE, 6, iconCX, iconCY);
+}
+
+static void PopulateLocationCombo() {
+    if (!hwndLocationCombo)
+        return;
+
+    SendMessage(hwndLocationCombo, CB_RESETCONTENT, 0, 0);
+
+    COMBOBOXEXITEMW cbei = {};
+    cbei.mask = CBEIF_TEXT | CBEIF_IMAGE | CBEIF_SELECTEDIMAGE;
+
+    WCHAR szDrive[4];
+
+    for (int i = 0; i < cDrives; i++) {
+        DRIVE drive = rgiDrive[i];
+        szDrive[0] = (WCHAR)(chFirstDrive + drive);
+        szDrive[1] = L':';
+        szDrive[2] = L'\0';
+
+        cbei.iItem = i;
+        cbei.pszText = szDrive;
+        cbei.iImage = aDriveInfo[drive].iOffset;
+        cbei.iSelectedImage = aDriveInfo[drive].iOffset;
+
+        SendMessage(hwndLocationCombo, CBEM_INSERTITEM, 0, (LPARAM)&cbei);
+    }
+}
+
+//
+// Navigate the active MDI child to an arbitrary path typed in the combobox.
+//
+void NavigateToPath(LPCWSTR pszPath) {
+    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+
+    // Determine the drive from the path
+    DRIVE drive = -1;
+    if (pszPath[0] && pszPath[1] == L':') {
+        WCHAR ch = pszPath[0];
+        if (ch >= L'a' && ch <= L'z')
+            drive = ch - L'a';
+        else if (ch >= L'A' && ch <= L'Z')
+            drive = ch - L'A';
+    }
+
+    if (drive < 0)
+        return;
+
+    // Check if the path exists
+    DWORD attrs = GetFileAttributesW(pszPath);
+    if (attrs == INVALID_FILE_ATTRIBUTES || !(attrs & FILE_ATTRIBUTE_DIRECTORY)) {
+        // Try treating it as a file path - strip filename
+        WCHAR szDir[MAXPATHLEN];
+        lstrcpyn(szDir, pszPath, COUNTOF(szDir));
+        LPWSTR pSlash = wcsrchr(szDir, L'\\');
+        if (pSlash) {
+            *pSlash = L'\0';
+            attrs = GetFileAttributesW(szDir);
+        }
+        if (attrs == INVALID_FILE_ATTRIBUTES || !(attrs & FILE_ATTRIBUTE_DIRECTORY)) {
+            MessageBeep(MB_ICONEXCLAMATION);
+            return;
+        }
+    }
+
+    // Build a path with filespec for the tree window
+    WCHAR szFullPath[MAXPATHLEN * 2];
+    lstrcpyn(szFullPath, pszPath, COUNTOF(szFullPath));
+
+    // Ensure trailing backslash + *.*
+    int len = lstrlen(szFullPath);
+    if (len > 0 && szFullPath[len - 1] != L'\\') {
+        szFullPath[len] = L'\\';
+        szFullPath[len + 1] = L'\0';
+    }
+    lstrcat(szFullPath, kStarDotStar);
+
+    if (!hwndActive || hwndActive == hwndSearch) {
+        // No active tree window - create a new one
+        dwNewSort = IDD_NAME;
+        dwNewView = VIEW_NAMEONLY;
+        CreateTreeWindow(szFullPath, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, -1);
+        return;
+    }
+
+    // Navigate active window to the new path
+    HWND hwndDir = HasDirWindow(hwndActive);
+    HWND hwndTree = HasTreeWindow(hwndActive);
+
+    if (hwndDir) {
+        SendMessage(hwndDir, FS_CHANGEDISPLAY, CD_PATH_FORCE, (LPARAM)szFullPath);
+    }
+
+    // Strip filespec for tree control
+    WCHAR szTreePath[MAXPATHLEN * 2];
+    lstrcpyn(szTreePath, pszPath, COUNTOF(szTreePath));
+
+    if (hwndTree) {
+        SendMessage(hwndTree, TC_SETDRIVE, MAKEWORD(FALSE, FALSE), (LPARAM)szTreePath);
+    }
+
+    SPC_SET_HITDISK(qFreeSpace);
+    UpdateStatus(hwndActive);
+}
+
+void UpdateToolbarState(HWND hwndActive) {
+    if (!hwndToolbarCtrl)
+        return;
+
+    BOOL bEnable = FALSE;
+    DWORD dwView = VIEW_NAMEONLY;
+    DWORD dwSort = IDD_NAME;
+
+    if (hwndActive && hwndActive != hwndSearch) {
+        // It's a tree window - enable toolbar items and read state
+        bEnable = TRUE;
+        dwView = (DWORD)GetWindowLongPtr(hwndActive, GWL_VIEW) & VIEW_EVERYTHING;
+        dwSort = (DWORD)GetWindowLongPtr(hwndActive, GWL_SORT);
+    }
+
+    // Update location combobox enable state
+    if (hwndLocationCombo) {
+        EnableWindow(hwndLocationCombo, bEnable);
+    }
+
+    // Update combobox selection to match active window's drive
+    if (hwndLocationCombo && hwndActive) {
+        DRIVE drive = (DRIVE)GetWindowLongPtr(hwndActive, GWL_TYPE);
+        if (drive == TYPE_SEARCH) {
+            drive = (DRIVE)SendMessage(hwndSearch, FS_GETDRIVE, 0, 0L) - CHAR_A;
+        }
+        for (int i = 0; i < cDrives; i++) {
+            if (rgiDrive[i] == drive) {
+                SendMessage(hwndLocationCombo, CB_SETCURSEL, i, 0);
+                break;
+            }
+        }
+    }
+
+    // Update view radio group
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VNAME, MAKELONG(dwView == VIEW_NAMEONLY, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VDETAILS, MAKELONG(dwView == VIEW_EVERYTHING, 0));
+
+    // Update sort radio group
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYNAME, MAKELONG(dwSort == IDD_NAME, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYTYPE, MAKELONG(dwSort == IDD_TYPE, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYSIZE, MAKELONG(dwSort == IDD_SIZE, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYDATE, MAKELONG(dwSort == IDD_DATE, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYFDATE, MAKELONG(dwSort == IDD_FDATE, 0));
+
+    // Enable/disable view and sort buttons
+    for (int i = 0; i < (int)NUM_TOOLBAR_BUTTONS; i++) {
+        if (toolbarButtons[i].idm && toolbarButtons[i].group > 0) {
+            SendMessage(hwndToolbarCtrl, TB_ENABLEBUTTON, toolbarButtons[i].idm, MAKELONG(bEnable, 0));
+        }
+    }
+}
+
+void RefreshToolbarDriveList() {
+    if (hwndLocationCombo) {
+        UINT dpi = GetDpiForWindow(hwndDriveBar);
+        CreateDriveImageList(dpi);
+        SendMessage(hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)himlDriveIcons);
+        PopulateLocationCombo();
+    }
 }
 
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
-/*  DrivesWndProc() -                                                       */
+/*  DrivesWndProc() - Toolbar window procedure                              */
 /*                                                                          */
 /*--------------------------------------------------------------------------*/
 
 LRESULT
 CALLBACK
 DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
-    int nDrive, nDriveCurrent, nDriveFocus;
-    RECT rc;
-    static int nDriveDoubleClick = -1;
-    static int nDriveDragging = -1;
-    HWND hwndChild;
-
-    hwndChild = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
-
-    nDriveCurrent = (int)GetWindowLongPtr(hWnd, GWL_CURDRIVEIND);
-    nDriveFocus = (int)GetWindowLongPtr(hWnd, GWL_CURDRIVEFOCUS);
-
     switch (wMsg) {
         case WM_CREATE: {
-            int i;
+            UINT dpi = GetDpiForWindow(hWnd);
+            ToolbarMetrics m = GetToolbarMetrics(dpi);
 
-            // Find the current drive, set the drive bitmaps
+            // Compute icon size for toolbar buttons
+            UINT iconCX, iconCY;
+            PngGetScaledSize(dpi, PNG_TYPE_TOOLBAR, 0, &iconCX, &iconCY);
+            if (iconCX == 0)
+                iconCX = iconCY = ScaleValueForDpi(16, dpi);
 
-            if (hwndChild == 0)
-                nDrive = 0;
-            else
-                nDrive = (int)GetWindowLongPtr(hwndChild, GWL_TYPE);
+            // Create the location combo box (ComboBoxEx for icon support)
+            CreateDriveImageList(dpi);
 
-            for (i = 0; i < cDrives; i++) {
-                if (rgiDrive[i] == nDrive) {
-                    SetWindowLongPtr(hWnd, GWL_CURDRIVEIND, i);
-                    SetWindowLongPtr(hWnd, GWL_CURDRIVEFOCUS, i);
-                }
+            hwndLocationCombo = CreateWindowExW(
+                0, WC_COMBOBOXEXW, NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL,
+                m.leftMargin, 0, m.comboWidth, m.comboHeight, hWnd, (HMENU)(INT_PTR)IDC_LOCATION_COMBO, hAppInstance,
+                NULL);
+
+            if (hwndLocationCombo) {
+                hwndDriveList = hwndLocationCombo;  // keep global in sync for compatibility
+                SendMessage(hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)himlDriveIcons);
+                PopulateLocationCombo();
             }
-            break;
-        }
 
-        case WM_VKEYTOITEM:
-            KeyToItem(hWnd, (WORD)wParam);
-            return -2L;
-            break;
+            // Create the toolbar control for buttons
+            hwndToolbarCtrl = CreateWindowExW(
+                0, TOOLBARCLASSNAMEW, NULL,
+                WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE |
+                    CCS_NOPARENTALIGN,
+                m.toolbarX, 0, 0, 0, hWnd, (HMENU)(INT_PTR)IDC_TOOLBAR_BUTTONS, hAppInstance, NULL);
 
-        case WM_KEYDOWN:
-            switch (wParam) {
-                case VK_ESCAPE:
-                    bCancelTree = TRUE;
-                    break;
+            if (hwndToolbarCtrl) {
+                SendMessage(hwndToolbarCtrl, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
 
-                case VK_F6:  // like excel
-                case VK_TAB: {
-                    HWND hwndTree, hwndDir, hwndSet, hwndNext;
-                    BOOL bDir;
-                    BOOL bChangeDisplay = FALSE;
+                // Set button size with padding around the icon
+                int btnWidth = iconCX + m.padding * 2;
+                int btnHeight = iconCY + m.padding * 2;
+                SendMessage(hwndToolbarCtrl, TB_SETBUTTONSIZE, 0, MAKELONG(btnWidth, btnHeight));
+                SendMessage(hwndToolbarCtrl, TB_SETPADDING, 0, MAKELONG(m.padding, m.padding));
 
-                    hwndNext = NULL;
+                // Create image list with rendered toolbar PNGs
+                HIMAGELIST himlButtons = CreatePngImageList(dpi, PNG_TYPE_TOOLBAR, TBAR_IMG_COUNT, iconCX, iconCY);
+                SendMessage(hwndToolbarCtrl, TB_SETIMAGELIST, 0, (LPARAM)himlButtons);
 
-                    GetTreeWindows(hwndChild, &hwndTree, &hwndDir);
-
-                    // Check to see if we can change to the directory window
-
-                    bDir = hwndDir != NULL;
-                    if (bDir) {
-                        HWND hwndLB;
-
-                        bChangeDisplay = (BOOL)GetWindowLongPtr(hwndDir, GWLP_USERDATA);
-
-                        hwndLB = GetDlgItem(hwndDir, IDCW_LISTBOX);
-                        if (hwndLB && !bChangeDisplay) {
-                            PVOID pv;
-                            SendMessage(hwndLB, LB_GETTEXT, 0, (LPARAM)&pv);
-                            bDir = pv != NULL;
-                        }
-                    }
-
-                    if (GetKeyState(VK_SHIFT) < 0) {
-                        hwndTree = (!hwndTree) ? hWnd : hwndTree;
-
-                        if (bDir) {
-                            hwndSet = hwndDir;
-                            hwndNext = hwndTree;
-                        } else {
-                            hwndSet = hwndTree;
-                        }
+                // Add buttons
+                TBBUTTON tbb[NUM_TOOLBAR_BUTTONS] = {};
+                for (int i = 0; i < (int)NUM_TOOLBAR_BUTTONS; i++) {
+                    if (toolbarButtons[i].style == TBSTYLE_SEP) {
+                        tbb[i].iBitmap = m.sepWidth;
+                        tbb[i].idCommand = 0;
+                        tbb[i].fsState = 0;
+                        tbb[i].fsStyle = TBSTYLE_SEP;
                     } else {
-                        hwndSet = hwndTree ? hwndTree : (bDir ? hwndDir : hWnd);
-                        hwndNext = hWnd;
+                        tbb[i].iBitmap = toolbarButtons[i].imgIndex;
+                        tbb[i].idCommand = toolbarButtons[i].idm;
+                        tbb[i].fsState = TBSTATE_ENABLED;
+                        tbb[i].fsStyle = toolbarButtons[i].style;
                     }
-
-                    SetFocus(hwndSet);
-                    if ((hwndSet == hwndDir) && bChangeDisplay) {
-                        SetWindowLongPtr(hwndDir, GWL_NEXTHWND, (LPARAM)hwndNext);
-                    }
-
-                    break;
                 }
+                SendMessage(hwndToolbarCtrl, TB_ADDBUTTONS, NUM_TOOLBAR_BUTTONS, (LPARAM)tbb);
+                SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
 
-                case VK_RETURN:  // same as double click
-                    NewTree(rgiDrive[nDriveFocus], hwndChild);
-                    break;
-
-                case VK_SPACE:  // same as single click
-
-                    // lParam: if same drive, don't steal
-                    SendMessage(hWnd, FS_SETDRIVE, nDriveFocus, 1L);
-                    break;
-
-                case VK_LEFT:
-                    nDrive = max(nDriveFocus - 1, 0);
-                    break;
-
-                case VK_RIGHT:
-                    nDrive = min(nDriveFocus + 1, cDrives - 1);
-                    break;
-            }
-
-            if ((wParam == VK_LEFT) || (wParam == VK_RIGHT)) {
-                SetWindowLongPtr(hWnd, GWL_CURDRIVEFOCUS, nDrive);
-
-                GetDriveRect(nDriveFocus, &rc);
-                InvalidateRect(hWnd, &rc, TRUE);
-                GetDriveRect(nDrive, &rc);
-                InvalidateRect(hWnd, &rc, TRUE);
-            } else if ((wParam >= CHAR_A) && (wParam <= CHAR_Z))
-                KeyToItem(hWnd, (WORD)wParam);
-
-            break;
-
-        case FS_GETDRIVE: {
-            POINT pt;
-
-            POINTSTOPOINT(pt, lParam);
-            nDrive = DriveFromPoint(hwndDriveBar, pt);
-
-            if (nDrive < 0)
-                nDrive = nDriveCurrent;
-
-            return rgiDrive[nDrive] + CHAR_A;
-        }
-
-        case WM_SETFOCUS:
-            SetWindowLongPtr(hwndChild, GWL_LASTFOCUS, (LPARAM)hWnd);
-            // fall through
-
-        case WM_KILLFOCUS:
-
-            InvalidateDrive(nDriveFocus);
-            break;
-
-        case WM_PAINT:
-            DrivesPaint(hWnd, nDriveFocus, nDriveCurrent);
-            break;
-
-            // the following handlers deal with mouse actions on
-            // the drive bar. they support the following:
-            // 1) single click on a drive sets the window to that drive
-            //    (on the upclick like regular buttons)
-            // 2) double click on a drive creates a new window for
-            //    that drive
-            // 3) double click on empty area brings up
-            //    the list of drive labels/share names
-            //
-            // since we see the up of the single click first we need to
-            // wait the double click time to make sure we don't get the
-            // double click. (we set a timer) since there is this
-            // delay it is important to provide instant feedback
-            // to the user by framing the drive when the mouse first hits it
-
-        case WM_MDIACTIVATE:
-            nDriveDoubleClick = -1;  // invalidate any cross window drive actions
-
-            break;
-
-        case WM_TIMER: {
-            HWND hwndTreeCtl;
-
-            KillTimer(hWnd, wParam);  // single shot timer
-
-            if (nDriveDoubleClick >= 0) {
-                // do the single click action
-
-                // lParam!=0 => if same drive, don't steal!
-                SendMessage(hWnd, FS_SETDRIVE, nDriveDoubleClick, 1L);
-                nDriveDoubleClick = -1;
-            }
-
-            //
-            //  Enable drive list combo box once the timer is finished
-            //  if the readlevel is set to 0.
-            //
-            hwndTreeCtl = HasTreeWindow(hwndChild);
-            if ((!hwndTreeCtl) || (GetWindowLongPtr(hwndTreeCtl, GWL_READLEVEL) == 0)) {
-                EnableWindow(hwndDriveList, TRUE);
+                // Size the toolbar control
+                RECT rcToolbar;
+                SendMessage(hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
+                SetWindowPos(hwndToolbarCtrl, NULL, m.toolbarX, 0, rcToolbar.right, rcToolbar.bottom, SWP_NOZORDER);
             }
 
             break;
         }
 
-        case WM_LBUTTONDOWN: {
-            POINT pt;
+        case WM_SIZE: {
+            int cy = HIWORD(lParam);
+            ToolbarMetrics m = GetToolbarMetrics(GetDpiForWindow(hWnd));
 
-            POINTSTOPOINT(pt, lParam);
-            SetCapture(hWnd);  // make sure we see the WM_LBUTTONUP
-            nDriveDoubleClick = DriveFromPoint(hwndDriveBar, pt);
+            if (hwndLocationCombo) {
+                RECT rcCombo;
+                GetWindowRect(hwndLocationCombo, &rcCombo);
+                int comboH = rcCombo.bottom - rcCombo.top;
+                int comboY = max(0, (cy - comboH) / 2);
+                SetWindowPos(hwndLocationCombo, NULL, m.leftMargin, comboY, m.comboWidth, m.comboHeight, SWP_NOZORDER);
+            }
 
-            // provide instant user feedback
-            if (nDriveDoubleClick >= 0)
-                RectDrive(nDriveDoubleClick, TRUE);
-        } break;
+            if (hwndToolbarCtrl) {
+                RECT rcToolbar;
+                SendMessage(hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
+                int toolbarY = max(0, (cy - rcToolbar.bottom) / 2);
+                SetWindowPos(
+                    hwndToolbarCtrl, NULL, m.toolbarX, toolbarY, rcToolbar.right, rcToolbar.bottom, SWP_NOZORDER);
+            }
+            break;
+        }
 
-        case WM_LBUTTONUP: {
-            POINT pt;
+        case WM_COMMAND: {
+            WORD wNotifyCode = HIWORD(wParam);
+            WORD wID = LOWORD(wParam);
 
-            POINTSTOPOINT(pt, lParam);
-
-            ReleaseCapture();
-            nDrive = DriveFromPoint(hwndDriveBar, pt);
-
-            if (nDriveDoubleClick >= 0) {
-                InvalidateDrive(nDriveDoubleClick);
-
-                if (hwndChild == hwndSearch)
-                    break;
-
-                if (nDrive == nDriveDoubleClick) {
-                    //
-                    //  Disable drive list combo box during the timer.
-                    //
-                    EnableWindow(hwndDriveList, FALSE);
-
-                    SetTimer(hWnd, 1, GetDoubleClickTime(), NULL);
+            if ((HWND)lParam == hwndLocationCombo || wID == IDC_LOCATION_COMBO) {
+                if (wNotifyCode == CBN_SELENDOK) {
+                    int sel = (int)SendMessage(hwndLocationCombo, CB_GETCURSEL, 0, 0);
+                    if (sel >= 0 && sel < cDrives) {
+                        HWND hwndChild = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+                        if (hwndChild && hwndChild != hwndSearch) {
+                            int nDriveCurrent = (int)GetWindowLongPtr(hWnd, GWL_CURDRIVEIND);
+                            DrivesSetDrive(hWnd, sel, nDriveCurrent, sel == nDriveCurrent);
+                        }
+                    }
+                    return 0;
                 }
             }
-        } break;
 
-        case WM_LBUTTONDBLCLK: {
-            POINT pt;
-
-            POINTSTOPOINT(pt, lParam);
-            nDrive = DriveFromPoint(hwndDriveBar, pt);
-
-            if (nDriveDoubleClick == nDrive) {
-                nDriveDoubleClick = -1;
-
-                // the double click is valid
-                NewTree(rgiDrive[nDrive], hwndChild);
+            // Forward toolbar button commands to the frame window
+            if ((HWND)lParam == hwndToolbarCtrl) {
+                switch (wID) {
+                    case IDM_VNAME:
+                    case IDM_VDETAILS:
+                    case IDM_BYNAME:
+                    case IDM_BYTYPE:
+                    case IDM_BYSIZE:
+                    case IDM_BYDATE:
+                    case IDM_BYFDATE:
+                    case IDM_NEWWINDOW:
+                        PostMessage(hwndFrame, WM_COMMAND, wID, 0);
+                        return 0;
+                }
             }
 
-            // invalidate the single click action
-            // ie. don't let the timer do a FS_SETDRIVE
+            return DefWindowProc(hWnd, wMsg, wParam, lParam);
+        }
 
-            nDriveDoubleClick = -1;
-        } break;
+        case WM_NOTIFY: {
+            LPNMHDR pnmh = (LPNMHDR)lParam;
+
+            if (pnmh->hwndFrom == hwndToolbarCtrl) {
+                if (pnmh->code == TBN_GETINFOTIPW) {
+                    // Provide tooltips from the same string table as the menu help
+                    LPNMTBGETINFOTIPW pTip = (LPNMTBGETINFOTIPW)lParam;
+                    LoadStringW(hAppInstance, MH_MYITEMS + pTip->iItem, pTip->pszText, pTip->cchTextMax);
+                    return 0;
+                }
+            }
+
+            return DefWindowProc(hWnd, wMsg, wParam, lParam);
+        }
 
         case FS_SETDRIVE:
             // wParam     the drive index to set
             // lParam if Non-Zero, don't steal on same drive!
+            DrivesSetDrive(
+                hWnd, (DRIVEIND)wParam, (int)GetWindowLongPtr(hWnd, GWL_CURDRIVEIND),
+                lParam && (wParam == (WPARAM)GetWindowLongPtr(hWnd, GWL_CURDRIVEIND)));
+            break;
 
-            DrivesSetDrive(hWnd, (DRIVEIND)wParam, nDriveCurrent, lParam && (wParam == (WPARAM)nDriveCurrent));
+        case FS_GETDRIVE: {
+            int nDriveCurrent = (int)GetWindowLongPtr(hWnd, GWL_CURDRIVEIND);
+            return rgiDrive[nDriveCurrent] + CHAR_A;
+        }
 
+        case WM_DESTROY:
+            if (himlDriveIcons) {
+                ImageList_Destroy(himlDriveIcons);
+                himlDriveIcons = NULL;
+            }
+            // The toolbar image list is owned by the toolbar and destroyed with it,
+            // but we need to be careful. Get it before the toolbar is destroyed.
+            if (hwndToolbarCtrl) {
+                HIMAGELIST himl = (HIMAGELIST)SendMessage(hwndToolbarCtrl, TB_GETIMAGELIST, 0, 0);
+                if (himl)
+                    ImageList_Destroy(himl);
+            }
+            hwndToolbarCtrl = NULL;
+            hwndLocationCombo = NULL;
+            hwndDriveList = NULL;
             break;
 
         default:
@@ -869,23 +740,4 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     return 0L;
-}
-
-/* Returns nDrive if found, else -1 */
-int KeyToItem(HWND hWnd, WORD nDriveLetter) {
-    int nDrive;
-
-    if (nDriveLetter > CHAR_Z)
-        nDriveLetter -= CHAR_a;
-    else
-        nDriveLetter -= CHAR_A;
-
-    for (nDrive = 0; nDrive < cDrives; nDrive++) {
-        if (rgiDrive[nDrive] == (int)nDriveLetter) {
-            // If same drive, don't steal
-            SendMessage(hWnd, FS_SETDRIVE, nDrive, 1L);
-            return nDrive;
-        }
-    }
-    return -1;
 }
