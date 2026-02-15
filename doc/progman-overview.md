@@ -124,6 +124,7 @@ The application uses constructor dependency injection with the DI graph construc
   - Handles `LVN_BEGINDRAG` notification to initiate drag operations
   - `DragOver` method re-determines drag effects based on stored data object reference from `DragEnter` to ensure consistent behavior
   - `Drop` method checks internal vs external drag source to determine whether to delete source files (only internal drags delete sources)
+  - Same-folder drops (dragging an icon within its own window) are detected via `isSameFolderDrop()` and treated as no-ops
 
 ### Application Discovery
 - Scans system and user Start Menu folders

@@ -729,8 +729,11 @@ STDMETHODIMP DropTarget::DragEnter(IDataObject* pDataObj, DWORD grfKeyState, POI
         // Check if this is an internal drag (from our application)
         bool isInternalDrag = isInternalDragSource(pDataObj);
 
-        if (isInternalDrag) {
-            // Internal drag - allow move operations
+        if (isInternalDrag && isSameFolderDrop(pDataObj)) {
+            // Dragging within the same folder - no-op
+            *pdwEffect = DROPEFFECT_NONE;
+        } else if (isInternalDrag) {
+            // Internal drag to a different folder - allow move operations
             *pdwEffect = DROPEFFECT_MOVE;
         } else {
             // External drag - only allow copy operations
@@ -754,8 +757,11 @@ STDMETHODIMP DropTarget::DragOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect
         // Check if this is an internal drag (from our application)
         bool isInternalDrag = isInternalDragSource(currentDataObject_);
 
-        if (isInternalDrag) {
-            // Internal drag - allow move operations
+        if (isInternalDrag && isSameFolderDrop(currentDataObject_)) {
+            // Dragging within the same folder - no-op
+            *pdwEffect = DROPEFFECT_NONE;
+        } else if (isInternalDrag) {
+            // Internal drag to a different folder - allow move operations
             *pdwEffect = DROPEFFECT_MOVE;
         } else {
             // External drag - only allow copy operations
@@ -782,12 +788,17 @@ STDMETHODIMP DropTarget::Drop(IDataObject* pDataObj, DWORD grfKeyState, POINTL p
     *pdwEffect = DROPEFFECT_NONE;
 
     if (canAcceptDrop(pDataObj)) {
+        bool isInternalDrag = isInternalDragSource(pDataObj);
+
+        // Dragging within the same folder is a no-op
+        if (isInternalDrag && isSameFolderDrop(pDataObj)) {
+            *pdwEffect = DROPEFFECT_NONE;
+            return S_OK;
+        }
+
         auto filePaths = extractFilePaths(pDataObj);
         if (!filePaths.empty()) {
             folderWindow_->handleFileDrop(filePaths);
-
-            // Determine if this is an internal drag (from our application)
-            bool isInternalDrag = isInternalDragSource(pDataObj);
 
             if (isInternalDrag) {
                 // Internal drag - we can safely delete source files (move operation)
@@ -857,6 +868,26 @@ bool DropTarget::isInternalDragSource(IDataObject* pDataObj) {
     // Check if the data object contains our custom format
     FORMATETC formatEtc = { g_InternalDragFormat, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
     return pDataObj->QueryGetData(&formatEtc) == S_OK;
+}
+
+bool DropTarget::isSameFolderDrop(IDataObject* pDataObj) {
+    auto filePaths = extractFilePaths(pDataObj);
+    if (filePaths.empty() || !folderWindow_->folder_) {
+        return false;
+    }
+
+    const auto& targetFolder = folderWindow_->folder_->path();
+    for (const auto& filePath : filePaths) {
+        std::filesystem::path sourceFolder = std::filesystem::path(filePath).parent_path();
+        try {
+            if (!std::filesystem::equivalent(sourceFolder, targetFolder)) {
+                return false;
+            }
+        } catch (const std::exception&) {
+            return false;
+        }
+    }
+    return true;
 }
 
 // FolderWindow drag source methods

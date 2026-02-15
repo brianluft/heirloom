@@ -91,6 +91,7 @@ class FolderWindow {
 
     friend LRESULT CALLBACK FolderWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
     friend class ProgramManagerWindow;  // Allow ProgramManagerWindow to access window_
+    friend class DropTarget;
 };
 
 // DropTarget class to handle drag and drop operations
@@ -117,6 +118,7 @@ class DropTarget : public IDropTarget {
     std::vector<std::wstring> extractFilePaths(IDataObject* pDataObj);
     bool canAcceptDrop(IDataObject* pDataObj);
     bool isInternalDragSource(IDataObject* pDataObj);
+    bool isSameFolderDrop(IDataObject* pDataObj);
 };
 
 // DragSource class to handle drag and drop operations
