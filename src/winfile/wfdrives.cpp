@@ -41,6 +41,7 @@ static const struct {
     BYTE style;    // TBSTYLE_*
     BYTE group;    // 0=none, 1=view, 2=sort
 } toolbarButtons[] = {
+    { 0, -1, TBSTYLE_SEP, 0 },
     { IDM_VNAME, TBAR_IMG_LIST, TBSTYLE_CHECKGROUP, 1 },
     { IDM_VDETAILS, TBAR_IMG_DETAILS, TBSTYLE_CHECKGROUP, 1 },
     { 0, -1, TBSTYLE_SEP, 0 },
@@ -316,6 +317,7 @@ void DrivesSetDrive(HWND hWnd, DRIVEIND driveInd, DRIVEIND driveIndCur, BOOL bDo
 struct ToolbarMetrics {
     int padding;
     int leftMargin;
+    int rightMargin;
     int sepWidth;
     int comboDropdownHeight;
     int spacing;
@@ -325,6 +327,7 @@ static ToolbarMetrics GetToolbarMetrics(UINT dpi) {
     ToolbarMetrics m;
     m.padding = ScaleValueForDpi(4, dpi);
     m.leftMargin = ScaleValueForDpi(4, dpi);
+    m.rightMargin = ScaleValueForDpi(4, dpi);
     m.sepWidth = ScaleValueForDpi(8, dpi);
     m.comboDropdownHeight = ScaleValueForDpi(200, dpi);
     m.spacing = ScaleValueForDpi(8, dpi);
@@ -557,6 +560,35 @@ void RefreshToolbarDriveList() {
     }
 }
 
+static LRESULT CALLBACK
+ToolbarSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+    if (uMsg == WM_NCDESTROY) {
+        RemoveWindowSubclass(hWnd, ToolbarSubclassProc, uIdSubclass);
+        return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    }
+
+    LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
+    if (uMsg == WM_PAINT) {
+        // Paint over separator areas to hide the default vertical line.
+        int count = (int)SendMessage(hWnd, TB_BUTTONCOUNT, 0, 0);
+        HDC hdc = GetDC(hWnd);
+        HBRUSH hbr = GetSysColorBrush(COLOR_BTNFACE);
+        for (int i = 0; i < count; i++) {
+            TBBUTTON tbb;
+            SendMessage(hWnd, TB_GETBUTTON, i, (LPARAM)&tbb);
+            if (tbb.fsStyle & TBSTYLE_SEP) {
+                RECT rc;
+                SendMessage(hWnd, TB_GETITEMRECT, i, (LPARAM)&rc);
+                FillRect(hdc, &rc, hbr);
+            }
+        }
+        ReleaseDC(hWnd, hdc);
+    }
+
+    return result;
+}
+
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
 /*  DrivesWndProc() - Toolbar window procedure                              */
@@ -630,6 +662,8 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
 
                 SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
+
+                SetWindowSubclass(hwndToolbarCtrl, ToolbarSubclassProc, 0, 0);
             }
 
             break;
@@ -648,7 +682,7 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 SendMessage(hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
                 toolbarWidth = rcToolbar.right;
                 toolbarHeight = rcToolbar.bottom;
-                int toolbarX = cx - toolbarWidth;
+                int toolbarX = cx - toolbarWidth - m.rightMargin;
                 int toolbarY = max(0, (cy - toolbarHeight) / 2);
                 SetWindowPos(hwndToolbarCtrl, NULL, toolbarX, toolbarY, toolbarWidth, toolbarHeight, SWP_NOZORDER);
             }
