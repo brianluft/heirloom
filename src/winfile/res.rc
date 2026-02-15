@@ -191,7 +191,7 @@ BEGIN
     MENUITEM    SEPARATOR
     MENUITEM    "&Run...",          IDM_RUN
     MENUITEM    SEPARATOR
-    MENUITEM    "New &directory...\tCtrl+Shift+N", IDM_MAKEDIR
+    MENUITEM    "New &folder...\tCtrl+Shift+N", IDM_MAKEDIR
     MENUITEM    "Searc&h...\tCtrl+F",       IDM_SEARCH
     MENUITEM    "Select &files...", IDM_SELECT
     POPUP       "Start (&.)"
@@ -214,9 +214,9 @@ BEGIN
     END
     POPUP       "&View"
     BEGIN
-    MENUITEM    "T&ree and directory",  IDM_BOTH
+    MENUITEM    "T&ree and folder",  IDM_BOTH
     MENUITEM    "Tr&ee only",           IDM_TREEONLY
-    MENUITEM    "Directory &only",      IDM_DIRONLY
+    MENUITEM    "Folder &only",      IDM_DIRONLY
     MENUITEM    SEPARATOR
     MENUITEM    "Sp&lit",               IDM_SPLIT
     MENUITEM    SEPARATOR
@@ -276,7 +276,7 @@ BEGIN
     MENUITEM    "Open in &new window\tCtrl+Shift Enter", IDM_NEWWINDOW
     MENUITEM    "&Open\tEnter",     IDM_OPEN
     MENUITEM    "Edit\tF12",        IDM_EDIT
-    MENUITEM    "New &directory...\tCtrl+Shift+N", IDM_MAKEDIR
+    MENUITEM    "New &folder...\tCtrl+Shift+N", IDM_MAKEDIR
     MENUITEM    SEPARATOR
     MENUITEM    "&Move to...\tF7",  IDM_MOVE
     MENUITEM    "&Copy to...\tF8",  IDM_COPY
@@ -335,7 +335,7 @@ BEGIN
     IDS_NETDISCONOPEN       "Heirloom File Manager cannot disconnect network drive.\n\nFiles are open on this drive."
 
     IDS_ATTRIBERR           "Heirloom File Manager cannot change attributes.  "
-    IDS_MAKEDIRERR          "Heirloom File Manager cannot create directory.  "
+    IDS_MAKEDIRERR          "Heirloom File Manager cannot create folder.  "
 
     IDS_LABELDISKERR        "Heirloom File Manager cannot label disk.\n\nMake sure the disk is not write-protected, is not a network drive, and that the label is valid.\
                              Labels cannot contain the following characters:\n[space] * ? / \\ | . , ; : + = [ ] ( ) & ^ < > "" "
@@ -362,29 +362,29 @@ BEGIN
     IDS_INVALIDDLL          "One of the library files needed to run this application is damaged. Please reinstall this application."
     IDS_SHAREERROR          "This file is in use by some other application."
 
-    IDS_CREATELONGDIR       "Heirloom File Manager may not be able to access files created in the directory '%s.'\n\nDo you want to continue?"
-    IDS_CREATELONGDIRTITLE  "Create Directory"
+    IDS_CREATELONGDIR       "Heirloom File Manager may not be able to access files created in the folder '%s.'\n\nDo you want to continue?"
+    IDS_CREATELONGDIRTITLE  "Create folder"
 
     IDS_MOUSECONFIRM,       "Confirm Mouse Operation"       /* 32 */
-    IDS_COPYMOUSECONFIRM,   "Are you sure you want to copy the selected files or directories to %s?"
-    IDS_MOVEMOUSECONFIRM,   "Are you sure you want to move the selected files or directories to %s?"
-    IDS_LINKMOUSECONFIRM,   "Are you sure you want to link the selected files or directories to %s?"
+    IDS_COPYMOUSECONFIRM,   "Are you sure you want to copy the selected files or folders to %s?"
+    IDS_MOVEMOUSECONFIRM,   "Are you sure you want to move the selected files or folders to %s?"
+    IDS_LINKMOUSECONFIRM,   "Are you sure you want to link the selected files or folders to %s?"
     IDS_EXECMOUSECONFIRM,   "Are you sure you want to start %s using %s as the initial file?"                                                          /* 128 */
 
     IDS_WINFILE,            "Heirloom File Manager"                  /* 32 */
-    IDS_TREETITLE,          "Directory Tree"                /* 32 */
+    IDS_TREETITLE,          "Folder tree"                /* 32 */
     IDS_SEARCHTITLE,        "Search Results: "              /* 32 */
 
-    IDS_READING             "Reading directory, please wait..."
+    IDS_READING             "Reading folder, please wait..."
     IDS_TOOMANYTITLE,       "Too Many Files"                /* 32 */
     IDS_OOMTITLE,           "Heirloom File Manager - Out of Memory"  /* 32 */
-    IDS_OOMREADINGDIRMSG,   "Unable to read entire directory.  Only a partial listing will be displayed."                                              /* 128 */
+    IDS_OOMREADINGDIRMSG,   "Unable to read entire folder.  Only a partial listing will be displayed."                                              /* 128 */
 
 //    IDS_PRINTFNF            "The file to be printed cannot be found. Make sure the correct path and filename are specified."                                                                                  /* 128 */
 
 
-    IDS_CURDIRIS,           "Current directory: %s"                                                                                                    /* 128 */
-    IDS_CURDIRSARE,         "Other current directories: "
+    IDS_CURDIRIS,           "Current folder: %s"                                                                                                    /* 128 */
+    IDS_CURDIRSARE,         "Other current folders: "
     IDS_COPY,               "Copy"                          /* 32 */
     IDS_RENAME,             "Rename"                        /* 32 */
     IDS_FORMAT,             "Format Disk"                   /* 32 */
@@ -422,8 +422,8 @@ BEGIN
     IDS_STATUSMSG2,         "Selected %d file(s) (%s)"          /* 128 */
     IDS_DRIVEFREE,          "%c: %s free,  %s total"            /* 128 */
     430,                    "%c: %s free,  %s total,  %s in Recycle Bin"            /* 128 */
-    IDS_TREEABORT,          "Incomplete directory tree displayed"     /* 128 */
-    IDS_DIRSREAD,           "Directories read: %d "                   /* 32 */
+    IDS_TREEABORT,          "Incomplete folder tree displayed"     /* 128 */
+    IDS_DIRSREAD,           "Folders read: %d "                   /* 32 */
     IDS_SEARCHMSG,          "%d file(s) found"
     IDS_BYTES,              "%ld bytes"
     IDS_SBYTES,             "%s bytes"
@@ -440,7 +440,7 @@ BEGIN
     IDS_COPYERROR + FUNC_DELETE   "Error Deleting File"
     IDS_COPYERROR + FUNC_RENAME   "Error Renaming File"
     IDS_COPYERROR + FUNC_SETDRIVE "Error Selecting Drive"
-    IDS_COPYERROR + FUNC_EXPAND   "Error Reading Directory"
+    IDS_COPYERROR + FUNC_EXPAND   "Error reading folder"
     IDS_COPYERROR + FUNC_LABEL    "Error Labeling Disk"
     IDS_COPYERROR + FUNC_LINK     "Error Creating Symbolic Link"
     IDS_COPYERROR + FUNC_HARD     "Error Creating Hardlink"
@@ -456,8 +456,8 @@ BEGIN
     IDS_VERBS + FUNC_LINK       "Heirloom File Manager cannot create symbolic link %s: %s"
     IDS_VERBS + FUNC_HARD       "Heirloom File Manager cannot create hardlink %s: %s"
     IDS_VERBS + FUNC_JUNC       "Heirloom File Manager cannot create junction %s: %s"
-    IDS_ACTIONS + 1             "Heirloom File Manager cannot create directory %s: %s"
-    IDS_ACTIONS + 2             "Heirloom File Manager cannot remove directory %s: %s"
+    IDS_ACTIONS + 1             "Heirloom File Manager cannot create folder %s: %s"
+    IDS_ACTIONS + 2             "Heirloom File Manager cannot remove folder %s: %s"
     IDS_REPLACING               "Heirloom File Manager cannot create or replace %s: %s"
     // IDS_CREATING             "Heirloom File Manager cannot create %s: %s"
 
@@ -512,7 +512,7 @@ BEGIN
     IDS_DISKCOPYCONFIRMTITLE    "Confirm Copy Disk"
     IDS_ANDCLOSE                "&Close"        // goes on Selection dialog
     IDS_CLOSE                   "Close"         // braindead "&Change"
-    IDS_PATHNOTTHERE            "Directory %s does not exist.\n\nDo you want to create it?"
+    IDS_PATHNOTTHERE            "Folder %s does not exist.\n\nDo you want to create it?"
     IDS_PROGRAMS                "Programs#*.exe;*.pif;*.com;*.bat#All Files (*.*)#*.*#"
 
     IDS_MENUANDITEM             "%s - %s"
@@ -522,7 +522,7 @@ BEGIN
     IDS_CONNECTHELP             "Connect network drive"
     IDS_DISCONHELP              "Disconnect network drive"
     IDS_CONNECTIONHELP          "Network connections"
-    IDS_STOPSHAREHELP           "Stop sharing directory"
+    IDS_STOPSHAREHELP           "Stop sharing folder"
     IDS_VDETAILSHELP            "View all file details"
     IDS_VNAMEHELP               "View name only"
     IDS_BYNAMEHELP              "Sort by name"
@@ -534,7 +534,7 @@ BEGIN
     IDS_MOVEHELP                "Move files"
     IDS_DELHELP                 "Delete files"
 
-    IDS_DIRNAMELABEL            "&Directory Name:"
+    IDS_DIRNAMELABEL            "&Folder name:"
     IDS_DRIVENOTAVAILABLE       "Network drive is not available."
 
     IDS_SHAREDAS                "Shared as %s"
@@ -570,19 +570,19 @@ BEGIN
     IDS_RUN                     "Run"
 
     IDS_NOFILES                 "No files found."
-    IDS_NOACCESSDIR             "You do not have permission to access this directory."
+    IDS_NOACCESSDIR             "You do not have permission to access this folder."
     IDS_NOACCESSFILE            "You do not have permission to access this file."
 
     IDS_DRIVEBUSY_COPY          "Drive %c: is busy and cannot be accessed.\nHeirloom File Manager is performing a disk copy."
     IDS_DRIVEBUSY_FORMAT        "Drive %c: is busy and cannot be accessed.\nHeirloom File Manager is formatting this disk."
 
     IDS_COPYMOVENOTCOMPLETED    "Operation not fully completed"
-    IDS_DIRREMAINS              "Unable to finish operation on all files and directories."
+    IDS_DIRREMAINS              "Unable to finish operation on all files and folders."
 
-    IDS_TOOMANYWINDOWS          "Too many directory windows are open.\n\nClose one or more windows, and then try again."
+    IDS_TOOMANYWINDOWS          "Too many folder windows are open.\n\nClose one or more windows, and then try again."
 
-    IDS_NOSUCHDIRTITLE          "Cannot read directory"
-    IDS_NOSUCHDIR               "Directory does not exist."
+    IDS_NOSUCHDIRTITLE          "Cannot read folder"
+    IDS_NOSUCHDIR               "Folder does not exist."
 
     IDS_BADNETNAMETITLE         "Cannot connect network drive"
     IDS_BADNETNAME              "The network name cannot be found."
@@ -620,29 +620,29 @@ BEGIN
     MH_MYITEMS+IDM_OPEN,        "Opens selected item"
     MH_MYITEMS+IDM_EDIT,        "Edits selected item using notepad.exe"
     MH_MYITEMS+IDM_MOVE,        "Moves selected item"
-    MH_MYITEMS+IDM_COPY,        "Copies files and directories"
+    MH_MYITEMS+IDM_COPY,        "Copies files and folders"
     MH_MYITEMS+IDM_COPYTOCLIPBOARD, "Copies one or more files to the clipboard"
     MH_MYITEMS+IDM_CUTTOCLIPBOARD, "Cuts one or more files to the clipboard"
-    MH_MYITEMS+IDM_PASTE,       "Paste file from clipboard to current directory"
-    MH_MYITEMS+IDM_DELETE,      "Deletes files and directories"
-    MH_MYITEMS+IDM_RENAME,      "Renames a file or directory"
+    MH_MYITEMS+IDM_PASTE,       "Paste file from clipboard to current folder"
+    MH_MYITEMS+IDM_DELETE,      "Deletes files and folders"
+    MH_MYITEMS+IDM_RENAME,      "Renames a file or folder"
     MH_MYITEMS+IDM_ATTRIBS,     "Sets file attributes and displays properties"
     MH_MYITEMS+IDM_RUN,         "Starts or opens an application or document"
     
     
-    MH_MYITEMS+IDM_MAKEDIR,     "Creates a directory"
-    MH_MYITEMS+IDM_SEARCH,      "Searches for files and directories"
-    MH_MYITEMS+IDM_SELECT,      "Selects files and directories"
+    MH_MYITEMS+IDM_MAKEDIR,     "Creates a folder"
+    MH_MYITEMS+IDM_SEARCH,      "Searches for files and folders"
+    MH_MYITEMS+IDM_SELECT,      "Selects files and folders"
     MH_MYITEMS+IDM_EXIT,        "Quits Heirloom File Manager"
 
-    MH_MYITEMS+IDM_EXPONE,      "Displays another level of a directory"
-    MH_MYITEMS+IDM_COLLAPSE,    "Collapses all directories of a selected directory"
+    MH_MYITEMS+IDM_EXPONE,      "Displays another level of a folder"
+    MH_MYITEMS+IDM_COLLAPSE,    "Collapses all subfolders of a selected folder"
     
 
-    MH_MYITEMS+IDM_BOTH,        "Displays the directory tree and the contents of the current directory"
-    MH_MYITEMS+IDM_TREEONLY,    "Displays the directory tree"
-    MH_MYITEMS+IDM_DIRONLY,     "Displays the contents of the current directory"
-    MH_MYITEMS+IDM_SPLIT,       "Splits a directory window or moves the split bar"
+    MH_MYITEMS+IDM_BOTH,        "Displays the folder tree and the contents of the current folder"
+    MH_MYITEMS+IDM_TREEONLY,    "Displays the folder tree"
+    MH_MYITEMS+IDM_DIRONLY,     "Displays the contents of the current folder"
+    MH_MYITEMS+IDM_SPLIT,       "Splits a folder window or moves the split bar"
     MH_MYITEMS+IDM_VNAME,       "Shows filenames only"
     MH_MYITEMS+IDM_VDETAILS,    "Shows all file details"
     MH_MYITEMS+IDM_VOTHER,      "Shows partial file details"
@@ -667,8 +667,8 @@ BEGIN
     MH_MYITEMS+IDM_TILEHORIZONTALLY,    "Tiles windows horizontally"
     MH_MYITEMS+IDM_TILE,        "Tiles windows vertically"
     MH_MYITEMS+IDM_REFRESH,     "Updates the contents of a window"
-    MH_MYITEMS+IDM_HISTORYBACK, "Go back to the previous directory in history"
-    MH_MYITEMS+IDM_HISTORYFWD,  "Go forward to the next directory in history"
+    MH_MYITEMS+IDM_HISTORYBACK, "Go back to the previous folder in history"
+    MH_MYITEMS+IDM_HISTORYFWD,  "Go forward to the next folder in history"
 
     MH_MYITEMS+IDM_ABOUT,       "Displays information about Heirloom File Manager"
 END
@@ -681,9 +681,9 @@ BEGIN
     IDS_CONNECT,                "Connect &Network Drive..."
     IDS_DISCONNECT,             "&Disconnect Network Drive..."
     IDS_CONNECTIONS,            "&Network Connections..."
-    IDS_SHAREDDIR               "S&hared Directories..."
+    IDS_SHAREDDIR               "S&hared folders..."
     IDS_STOPSHARE,              "S&top Sharing..."
-    IDS_SHARES,                 "View S&hared Directories..."
+    IDS_SHARES,                 "View s&hared folders..."
     IDS_NEWWINONCONNECT,        "&Open New Window on Connect"
 END
 
@@ -701,7 +701,7 @@ BEGIN
     CONTROL         "...",IDD_DATE,"Static",SS_SIMPLE | SS_NOPREFIX,70,21,147,8
     CONTROL         "Starting from:",-1,"Static",SS_LEFTNOWORDWRAP,7,35,46,8
     CONTROL         "...",IDD_PATH,"Static",SS_SIMPLE | SS_NOPREFIX,70,35,147,8
-    CONTROL         "Directories read:",-1,"Static",SS_LEFTNOWORDWRAP,7,49,54,8
+    CONTROL         "Folders read:",-1,"Static",SS_LEFTNOWORDWRAP,7,49,54,8
     CONTROL         "...",IDD_TIME,"Static",SS_SIMPLE | SS_NOPREFIX,70,49,147,8
     CONTROL         "Matches found:",-1,"Static",SS_LEFTNOWORDWRAP,7,63,52,8
     CONTROL         "...",IDD_FOUND,"Static",SS_SIMPLE | SS_NOPREFIX,70,63,147,8
@@ -715,7 +715,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_
 CAPTION "Run"
 FONT 9, "Segoe UI", 400, 0, 0x0
 BEGIN
-    CONTROL         "<directory>",IDD_DIR,"Static",SS_SIMPLE | SS_NOPREFIX,7,7,228,8
+    CONTROL         "<folder>",IDD_DIR,"Static",SS_SIMPLE | SS_NOPREFIX,7,7,228,8
     CONTROL         "&Command line:",-1,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,7,25,51,8
     EDITTEXT        IDD_NAME,7,35,224,12,ES_AUTOHSCROLL
     CONTROL         "Run &minimized",IDD_LOAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,56,66,10
@@ -783,12 +783,12 @@ END
 
 CONFIRMRMDIR DIALOGEX 20, 20, 319, 71
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Confirm Directory Delete"
+CAPTION "Confirm folder delete"
 FONT 9, "Segoe UI", 400, 0, 0x0
 BEGIN
     ICON            OCR_CROSS,IDD_TEXT,7,14,20,20
     CONTROL         "",IDD_STATUS,"Static",SS_LEFTNOWORDWRAP,105,5,203,10
-    CONTROL         "Delete Directory:",IDD_TEXT,"Static",SS_LEFTNOWORDWRAP,35,14,56,8
+    CONTROL         "Delete folder:",IDD_TEXT,"Static",SS_LEFTNOWORDWRAP,35,14,56,8
     CONTROL         "",IDD_FROM,"Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX,105,14,170,10
     CONTROL         "",IDD_OTHER,"Static",SS_LEFTNOWORDWRAP | SS_NOPREFIX,105,23,203,10
     DEFPUSHBUTTON   "&Yes",IDYES,91,49,50,14
@@ -853,9 +853,9 @@ CONTROL "Start &From:", IDD_TEXT, "static", SS_LEFTNOWORDWRAP | WS_CHILD, 5, 36,
 DIALOGRESIZECONTROL{ 0, 67, 100, 0 }
 CONTROL "", IDD_DIR, "edit", ES_LEFT | WS_BORDER | WS_TABSTOP | WS_CHILD | ES_AUTOHSCROLL, 52, 35, 180, 12
 DIALOGRESIZECONTROL{ 0, 100, 0, 0 }
-CONTROL "S&earch All Subdirectories", IDD_SEARCHALL, "button", BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD, 52, 49, 100, 12
+CONTROL "S&earch all subfolders", IDD_SEARCHALL, "button", BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD, 52, 49, 100, 12
 DIALOGRESIZECONTROL{ 50, 100, 0, 0 }
-CONTROL "S&ubdirs in Results", IDD_INCLUDEDIRS, "button", BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD, 162, 49, 80, 12
+CONTROL "S&ubfolders in results", IDD_INCLUDEDIRS, "button", BS_AUTOCHECKBOX | WS_TABSTOP | WS_CHILD, 162, 49, 80, 12
 DIALOGRESIZECONTROL{ 100, 0, 0, 0 }
 CONTROL "OK", 1, "button", BS_DEFPUSHBUTTON | WS_TABSTOP | WS_CHILD, 237, 6, 40, 14
 DIALOGRESIZECONTROL{ 100, 25, 0, 0 }
@@ -870,7 +870,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
 DIALOGRESIZE{ 0, 125 }
 DIALOGRESIZECONTROL{ 0, 0, 100, 0 }
-CONTROL         "Current Directory: N", IDD_DIR, "Static", SS_SIMPLE | SS_NOPREFIX, 3, 6, 332, 10
+CONTROL         "Current folder: N", IDD_DIR, "Static", SS_SIMPLE | SS_NOPREFIX, 3, 6, 332, 10
 
 DIALOGRESIZECONTROL{ 0, 25, 0, 0 }
 CONTROL         "&To:", IDD_KK_TEXTTO, "Static", SS_LEFTNOWORDWRAP, 3, 33, 20, 10
@@ -909,7 +909,7 @@ STYLE WS_BORDER | DS_MODALFRAME | WS_CAPTION | WS_THICKFRAME | WS_POPUP | WS_SYS
 BEGIN
 DIALOGRESIZE{ 0, 125 }
 DIALOGRESIZECONTROL{ 0, 0, 100, 0 }
-CONTROL "Current Directory: C", IDD_DIR, "static", SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_CHILD, 3, 5, 193, 10
+CONTROL "Current folder: C", IDD_DIR, "static", SS_LEFTNOWORDWRAP | SS_NOPREFIX | WS_CHILD, 3, 5, 193, 10
 CONTROL "De&lete:", IDD_TEXT, "static", SS_LEFTNOWORDWRAP | WS_CHILD, 3, 20, 35, 10
 DIALOGRESIZECONTROL{ 0, 0, 100, 0 }
 CONTROL "", IDD_FROM, "edit", ES_LEFT | WS_BORDER | WS_TABSTOP | WS_CHILD | ES_AUTOHSCROLL, 40, 19, 155, 12
@@ -943,7 +943,7 @@ END
 
 
 MAKEDIRDLG DIALOGEX 20, 20, 200, 63
-CAPTION "Create Directory"
+CAPTION "Create folder"
 FONT 8, "MS Shell Dlg"
 STYLE WS_BORDER | DS_MODALFRAME | WS_CAPTION | WS_THICKFRAME | WS_POPUP | WS_SYSMENU | WS_CLIPCHILDREN
 BEGIN
@@ -986,7 +986,7 @@ FONT 9, "Segoe UI", 400, 0, 0x0
 BEGIN
     GROUPBOX        "Prompt for confirmation before...",IDD_TEXT,7,7,175,105,WS_TABSTOP
     CONTROL         "&Deleting files",IDD_DELETE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,21,59,10
-    CONTROL         "Deleting d&irectories",IDD_SUBDEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,35,80,10
+    CONTROL         "Deleting f&olders",IDD_SUBDEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,35,80,10
     CONTROL         "&Overwriting files",IDD_REPLACE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,70,10
     CONTROL         "&Mouse actions",IDD_MOUSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,63,64,10
     CONTROL         "Dis&k commands",IDD_CONFIG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,77,68,10
@@ -1029,7 +1029,7 @@ CONTROL "&New Name:", -1, "static", SS_RIGHT | WS_CHILD, 5, 56, 50, 12
 CONTROL "", IDD_TO, "edit", ES_LEFT | WS_BORDER | WS_TABSTOP | WS_CHILD, 57, 55, 130, 12
 CONTROL "Original Path:", -1, "static", SS_RIGHT | WS_CHILD, 5, 28, 50, 11
 CONTROL "", IDD_FROM, "edit", ES_READONLY | ES_LEFT | ES_AUTOHSCROLL | WS_TABSTOP | WS_CHILD, 57, 28, 130, 12
-CONTROL "To Directory:", -1, "static", SS_RIGHT | WS_CHILD, 5, 42, 50, 11
+CONTROL "To folder:", -1, "static", SS_RIGHT | WS_CHILD, 5, 42, 50, 11
 CONTROL "", IDD_DIR, "edit", ES_READONLY | ES_LEFT | ES_AUTOHSCROLL | WS_TABSTOP | WS_CHILD, 57, 42, 130, 12
 CONTROL "OK", IDOK, "button", BS_DEFPUSHBUTTON | WS_TABSTOP | WS_CHILD, 205, 4, 40, 14
 CONTROL "Cancel", IDCANCEL, "button", BS_PUSHBUTTON | WS_TABSTOP | WS_CHILD, 205, 20, 40, 14
