@@ -172,8 +172,8 @@ BEGIN
     MENUITEM    SEPARATOR
     MENUITEM    "&Move to...\tF7",  IDM_MOVE
     MENUITEM    "&Copy to...\tF8",  IDM_COPY
-    MENUITEM    "S&ymlink...\tF11", IDM_SYMLINK
-    MENUITEM    "Hardlin&k...\tShift+F11", IDM_HARDLINK
+    MENUITEM    "S&ymbolic link to...\tF11", IDM_SYMLINK
+    MENUITEM    "Hard &link to...\tShift+F11", IDM_HARDLINK
     POPUP       "&Zip archive"
     BEGIN
         MENUITEM    "Add to &zip",           IDM_ZIPARCHIVE_ADDTOZIP
@@ -192,7 +192,6 @@ BEGIN
     MENUITEM    "&Run...",          IDM_RUN
     MENUITEM    SEPARATOR
     MENUITEM    "New &folder...\tCtrl+Shift+N", IDM_MAKEDIR
-    MENUITEM    "Searc&h...\tCtrl+F",       IDM_SEARCH
     MENUITEM    "Select &files...", IDM_SELECT
     POPUP       "Start (&.)"
     BEGIN
@@ -201,8 +200,6 @@ BEGIN
     MENUITEM    "Open PowerShell\tCtrl+P", IDM_STARTPOWERSHELL
     MENUITEM    "Open Explorer\tCtrl+E", IDM_STARTEXPLORER
     END
-    MENUITEM    SEPARATOR
-    MENUITEM    "Empty &recycle bin", IDM_EMPTYRECYCLE
     MENUITEM    SEPARATOR
     MENUITEM    "E&xit",            IDM_EXIT
     END
@@ -218,17 +215,15 @@ BEGIN
     MENUITEM    "Tr&ee only",           IDM_TREEONLY
     MENUITEM    "Folder &only",      IDM_DIRONLY
     MENUITEM    SEPARATOR
-    MENUITEM    "Sp&lit",               IDM_SPLIT
-    MENUITEM    SEPARATOR
-    MENUITEM    "&Name",                IDM_VNAME
-    MENUITEM    "&All file details",    IDM_VDETAILS,   CHECKED
-    MENUITEM    "&Partial details...",  IDM_VOTHER
+    MENUITEM    "&List",                IDM_VNAME
+    MENUITEM    "Det&ails",             IDM_VDETAILS,   CHECKED
+    MENUITEM    "Se&lect columns...",   IDM_VOTHER
     MENUITEM    SEPARATOR
     MENUITEM    "&Sort by name",        IDM_BYNAME
     MENUITEM    "Sort &by type",        IDM_BYTYPE
     MENUITEM    "Sort by si&ze",        IDM_BYSIZE
-    MENUITEM    "Sort by &date",        IDM_BYDATE
-    MENUITEM    "Sort &forward date",   IDM_BYFDATE
+    MENUITEM    "Sort by &date (newest first)",  IDM_BYDATE
+    MENUITEM    "Sort by date (oldest &first)",  IDM_BYFDATE
     MENUITEM    SEPARATOR
     MENUITEM    "&Drivebar",                IDM_DRIVEBAR
     MENUITEM    "S&tatus bar",              IDM_STATUSBAR
@@ -240,7 +235,10 @@ BEGIN
     END
     POPUP       "&Tools"
     BEGIN
-    MENUITEM    "&Options...",              IDM_OPTIONS
+    MENUITEM    "Searc&h...\tCtrl+F",       IDM_SEARCH
+    MENUITEM    "Empty &recycle bin",        IDM_EMPTYRECYCLE
+    MENUITEM    SEPARATOR
+    MENUITEM    "&Options",              IDM_OPTIONS
     END
     POPUP       "&Window"
     BEGIN
@@ -266,15 +264,15 @@ CTXMENU MENU
 BEGIN
     POPUP "Dummy Popup"
     BEGIN
-    MENUITEM    "Open in &new window\tCtrl+Shift Enter", IDM_NEWWINDOW
     MENUITEM    "&Open\tEnter",     IDM_OPEN
+    MENUITEM    "Open in &new window\tCtrl+Shift Enter", IDM_NEWWINDOW
     MENUITEM    "Edit\tF12",        IDM_EDIT
     MENUITEM    "New &folder...\tCtrl+Shift+N", IDM_MAKEDIR
     MENUITEM    SEPARATOR
     MENUITEM    "&Move to...\tF7",  IDM_MOVE
     MENUITEM    "&Copy to...\tF8",  IDM_COPY
-    MENUITEM    "S&ymlink...\tF11", IDM_SYMLINK
-    MENUITEM    "Hardlin&k...\tShift+F11", IDM_HARDLINK
+    MENUITEM    "S&ymbolic link to...\tF11", IDM_SYMLINK
+    MENUITEM    "Hard &link to...\tShift+F11", IDM_HARDLINK
     POPUP       "&Zip archive"
     BEGIN
         MENUITEM    "Add to &zip",           IDM_ZIPARCHIVE_ADDTOZIP
@@ -635,15 +633,14 @@ BEGIN
     MH_MYITEMS+IDM_BOTH,        "Displays the folder tree and the contents of the current folder"
     MH_MYITEMS+IDM_TREEONLY,    "Displays the folder tree"
     MH_MYITEMS+IDM_DIRONLY,     "Displays the contents of the current folder"
-    MH_MYITEMS+IDM_SPLIT,       "Splits a folder window or moves the split bar"
     MH_MYITEMS+IDM_VNAME,       "Shows filenames only"
     MH_MYITEMS+IDM_VDETAILS,    "Shows all file details"
-    MH_MYITEMS+IDM_VOTHER,      "Shows partial file details"
+    MH_MYITEMS+IDM_VOTHER,      "Selects which columns to display"
     MH_MYITEMS+IDM_BYNAME,      "Sorts files by name"
     MH_MYITEMS+IDM_BYTYPE,      "Sorts files by type"
     MH_MYITEMS+IDM_BYSIZE,      "Sorts files by size"
-    MH_MYITEMS+IDM_BYDATE,      "Sorts files by date"
-    MH_MYITEMS+IDM_BYFDATE,     "Sorts files by forward date"
+    MH_MYITEMS+IDM_BYDATE,      "Sorts files by date, newest first"
+    MH_MYITEMS+IDM_BYFDATE,     "Sorts files by date, oldest first"
 
     MH_MYITEMS+IDM_OPTIONS,     "Changes Heirloom File Manager options"
 

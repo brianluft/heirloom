@@ -112,7 +112,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Accelerator Keys** - Keyboard shortcut handling and conflicts
 - **Menu State Management** - Enable/disable states based on current selection
 - **Extension Support** - Third-party menu extension integration
-- **Menu Structure** - File, Edit, View (with Drivebar/Status bar toggles), Tools (Options dialog), Bookmarks, Window, Help
+- **Menu Structure** - File, Edit, View (with Drivebar/Status bar toggles), Tools (Search, Empty recycle bin, Options dialog), Bookmarks, Window, Help
 - **ZIP Archive Submenu** - Archive creation and extraction commands with selection-based enabling
   - **Smart Naming** - "Add to Zip" command uses improved logic to name archives after the containing folder, with fallback handling for root paths
   - **Path Handling** - Proper path construction prevents double backslashes in archive file paths

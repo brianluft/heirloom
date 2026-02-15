@@ -759,10 +759,6 @@ BOOL AppCommandProc(DWORD id) {
     }
 
     switch (id) {
-        case IDM_SPLIT:
-            SendMessage(hwndActive, WM_SYSCOMMAND, SC_SPLIT, 0L);
-            break;
-
         case IDM_TREEONLY:
         case IDM_DIRONLY:
         case IDM_BOTH: {

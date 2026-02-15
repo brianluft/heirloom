@@ -107,8 +107,6 @@
 #define IDM_TREEONLY 411
 #define IDM_DIRONLY 412
 #define IDM_BOTH 413
-#define IDM_SPLIT 414
-
 #define IDM_ESCAPE 420
 
 #define IDM_CONFIRM 501

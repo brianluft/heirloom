@@ -232,10 +232,6 @@ BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) 
             uMenuFlags = MF_BYCOMMAND | MF_GRAYED;
         EnableMenuItem(hMenu, IDM_ATTRIBS, uMenuFlags);
 
-        // Set the Empty Recycle Bin menu state based on whether it contains items
-        uMenuFlags = IsRecycleBinEmpty() ? MF_BYCOMMAND | MF_GRAYED : MF_BYCOMMAND;
-        EnableMenuItem(hMenu, IDM_EMPTYRECYCLE, uMenuFlags);
-
         // Set the ZIP Archive menu state based on file selection
         BOOL bHasSelection = (pSel != NULL);
         BOOL bHasZipFilesOnly = FALSE;
@@ -288,7 +284,6 @@ BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) 
         EnableMenuItem(hMenu, IDM_BOTH, uMenuFlags);
         EnableMenuItem(hMenu, IDM_TREEONLY, uMenuFlags);
         EnableMenuItem(hMenu, IDM_DIRONLY, uMenuFlags);
-        EnableMenuItem(hMenu, IDM_SPLIT, uMenuFlags);
 
         dwView &= VIEW_EVERYTHING;
 
@@ -332,13 +327,10 @@ BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) 
         EnableMenuItem(hMenu, IDM_BYDATE, uMenuFlags);
         EnableMenuItem(hMenu, IDM_BYFDATE, uMenuFlags);
 
-    } else if (popupName == L"&Options") {
-        if (iReadLevel)
-            uMenuFlags = MF_BYCOMMAND | MF_GRAYED;
-
-        EnableMenuItem(hMenu, IDM_EXPANDTREE, uMenuFlags);
-
-        uMenuFlags = MF_BYCOMMAND | MF_GRAYED;
+    } else if (popupName == L"&Tools") {
+        // Set the Empty Recycle Bin menu state based on whether it contains items
+        uMenuFlags = IsRecycleBinEmpty() ? MF_BYCOMMAND | MF_GRAYED : MF_BYCOMMAND;
+        EnableMenuItem(hMenu, IDM_EMPTYRECYCLE, uMenuFlags);
     } else if (popupName == L"&Bookmarks") {
         // First, remove any existing bookmark entries (keep only "Add Bookmark..." and "Manage Bookmarks..."
         int count = GetMenuItemCount(hMenu);
