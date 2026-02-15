@@ -248,7 +248,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **File System Drivers** - NTFS, FAT32, network file systems
 - **Graphics Subsystem** - GDI for custom drawing and PNG support
 - **COM/OLE** - Drag and drop operations and shell integration
-- **libheirloom** - Shared library providing cancellation token support for background operations, `MinimizedWindowListControl` base class for the minimized window bar, `window_data` for associating data with HWNDs, and `MdiDpiFixup` for redrawing MDI menu bar buttons with correctly-scaled glyphs at high DPI
+- **libheirloom** - Shared library providing cancellation token support for background operations, `MinimizedWindowListControl` base class for the minimized window bar, `window_data` for associating data with HWNDs, `MdiDpiFixup` for redrawing MDI menu bar buttons with correctly-scaled glyphs at high DPI, and `MdiChildNcPaint` for custom flat non-client area painting on MDI child windows (white caption bar, thin colored border, Marlett glyph buttons with hover effects)
 - **libwinfile** - Static library providing shared functionality for winfile
   - **ArchiveStatus** - Thread-safe status class for archive operations with mutex-protected UI updates
     - **Progress Support** - Enhanced with progress percentage tracking via updateWithProgress() and readWithProgress() methods

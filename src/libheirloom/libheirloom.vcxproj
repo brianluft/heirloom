@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cancel.cpp" />
+    <ClCompile Include="MdiChildNcPaint.cpp" />
     <ClCompile Include="MdiDpiFixup.cpp" />
     <ClCompile Include="MinimizedWindowListControl.cpp" />
     <ClCompile Include="window_data.cpp" />
@@ -37,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cancel.h" />
+    <ClInclude Include="MdiChildNcPaint.h" />
     <ClInclude Include="MdiDpiFixup.h" />
     <ClInclude Include="MinimizedWindowListControl.h" />
     <ClInclude Include="window_data.h" />

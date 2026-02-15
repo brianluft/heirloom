@@ -88,6 +88,7 @@
 #include "wfsearch.h"
 #include "stringconstants.h"
 #include "wfminbar.h"
+#include "libheirloom/MdiChildNcPaint.h"
 
 #include <commctrl.h>
 
@@ -558,6 +559,12 @@ SearchWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     WCHAR szMessage[MAXMESSAGELEN];
 
     hwndLB = GetDlgItem(hwnd, IDCW_LISTBOX);
+
+    {
+        auto ncResult = libheirloom::handleMdiChildNcMessage(hwnd, uMsg, wParam, lParam);
+        if (ncResult.handled)
+            return ncResult.lResult;
+    }
 
     switch (uMsg) {
         case WM_COMPAREITEM:

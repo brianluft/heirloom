@@ -5,6 +5,7 @@
 #include "libprogman/string_util.h"
 #include "libprogman/window_data.h"
 #include "libprogman/window_state.h"
+#include "libheirloom/MdiChildNcPaint.h"
 
 namespace progman {
 
@@ -366,6 +367,12 @@ void FolderWindow::handleDeleteCommand() {
 }
 
 LRESULT FolderWindow::handleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    {
+        auto ncResult = libheirloom::handleMdiChildNcMessage(hwnd, message, wParam, lParam);
+        if (ncResult.handled)
+            return ncResult.lResult;
+    }
+
     switch (message) {
         case WM_SIZE: {
             // Resize the ListView to fill the client area

@@ -21,6 +21,7 @@
 #include "wfdrives.h"
 #include "stringconstants.h"
 #include "wfminbar.h"
+#include "libheirloom/MdiChildNcPaint.h"
 
 #include <commctrl.h>
 
@@ -315,6 +316,12 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     RECT rc;
     HDC hdc;
 
+    {
+        auto ncResult = libheirloom::handleMdiChildNcMessage(hwnd, uMsg, wParam, lParam);
+        if (ncResult.handled)
+            return ncResult.lResult;
+    }
+
     switch (uMsg) {
         case WM_MENUSELECT:
 
@@ -450,7 +457,6 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             int dxSplit;
             DRIVE drive;
-            DWORD dwNewExStyle;
             WCHAR szPath[2 * MAXFILENAMELEN];
 
             //
@@ -479,21 +485,6 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             SetWindowLongPtr(hwnd, GWL_VOLNAME, 0L);
             SetWindowLongPtr(hwnd, GWL_PATHLEN, 0L);
-
-            //
-            // Add a sunken border to the window
-            //
-            dwNewExStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-            dwNewExStyle = dwNewExStyle | WS_EX_CLIENTEDGE;
-            SetWindowLong(hwnd, GWL_EXSTYLE, dwNewExStyle);
-
-            //
-            // Refresh its frame so the child windows below are created
-            // in the correct place now the border is in place
-            //
-            SetWindowPos(
-                hwnd, NULL, 0, 0, 0, 0,
-                SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOCOPYBITS);
 
             if (!ResizeSplit(hwnd, dxSplit))
                 return -1;
