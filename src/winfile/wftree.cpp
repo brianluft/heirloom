@@ -521,6 +521,14 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             if (lpszVolName)
                 LocalFree(lpszVolName);
 
+            //
+            // Free GWL_DIRPATH
+            //
+            LPWSTR lpszDirPath = (LPWSTR)GetWindowLongPtr(hwnd, GWL_DIRPATH);
+
+            if (lpszDirPath)
+                LocalFree(lpszDirPath);
+
             break;
         }
         case WM_MDIACTIVATE:

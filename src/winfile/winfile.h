@@ -300,6 +300,8 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam
 
 #define GWL_LASTFOCUS (9 * sizeof(LONG_PTR))
 
+#define GWL_DIRPATH (10 * sizeof(LONG_PTR))  // LPWSTR to full directory path (allocated)
+
 // szDrivesClass...
 
 #define GWL_CURDRIVEIND (0 * sizeof(LONG_PTR))    // current selection in drives window

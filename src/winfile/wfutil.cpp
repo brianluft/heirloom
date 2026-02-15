@@ -487,16 +487,40 @@ int GetMDIWindowText(HWND hwnd, LPWSTR szTitle, int size) {
     LPWSTR lpLast;
     int iWindowNumber;
 
+    BOOL bIsTreeWindow = !GetWindow(hwnd, GW_OWNER) && GetWindowLongPtr(hwnd, GWL_TYPE) != -1L;
+
     EnterCriticalSection(&CriticalSectionPath);
 
-    InternalGetWindowText(hwnd, szTemp, COUNTOF(szTemp));
+    // For tree windows, try to read the full directory path from GWL_DIRPATH
+    // (stored by SetMDIWindowText). Fall back to the window title if not set.
+    LPWSTR lpszDirPath = NULL;
+    if (bIsTreeWindow) {
+        lpszDirPath = (LPWSTR)GetWindowLongPtr(hwnd, GWL_DIRPATH);
+    }
 
-    if (GetWindow(hwnd, GW_OWNER) || GetWindowLongPtr(hwnd, GWL_TYPE) == -1L)
-        lpLast = NULL;
-    else {
-        lpLast = szTemp + GetWindowLongPtr(hwnd, GWL_PATHLEN);
-        if (lpLast == szTemp || !*lpLast)
+    if (lpszDirPath && *lpszDirPath) {
+        // Use the stored full directory path
+        lstrcpyn(szTemp, lpszDirPath, COUNTOF(szTemp));
+
+        // Read the window title to extract the :N suffix
+        WCHAR szWinTitle[2 * MAXPATHLEN + 40];
+        InternalGetWindowText(hwnd, szWinTitle, COUNTOF(szWinTitle));
+
+        LONG_PTR pathLen = GetWindowLongPtr(hwnd, GWL_PATHLEN);
+        lpLast = szWinTitle + pathLen;
+        if (lpLast == szWinTitle || !*lpLast)
             lpLast = NULL;
+    } else {
+        // No stored path — read from window title (pre-SetMDIWindowText or search window)
+        InternalGetWindowText(hwnd, szTemp, COUNTOF(szTemp));
+
+        if (!bIsTreeWindow)
+            lpLast = NULL;
+        else {
+            lpLast = szTemp + GetWindowLongPtr(hwnd, GWL_PATHLEN);
+            if (lpLast == szTemp || !*lpLast)
+                lpLast = NULL;
+        }
     }
 
     LeaveCriticalSection(&CriticalSectionPath);
@@ -506,22 +530,12 @@ int GetMDIWindowText(HWND hwnd, LPWSTR szTitle, int size) {
     //
     if (lpLast) {
         iWindowNumber = atoi(lpLast + 1);
-
-        //
-        // Delimit title (we just want part of the title)
-        //
-        *lpLast = CHAR_NULL;
-
     } else {
         iWindowNumber = 0;
     }
 
-    // After SetMDIWindowText, the window title contains only the directory
-    // path (e.g., "C:\temp").  Append "\*.*" to reconstruct the internal
-    // path that callers expect.  GWL_PATHLEN is non-zero once
-    // SetMDIWindowText has been called; before that the title still
-    // contains the original path with filespec, so we must not append.
-    if (GetWindowLongPtr(hwnd, GWL_TYPE) != -1L && GetWindowLongPtr(hwnd, GWL_PATHLEN) != 0) {
+    // Append "\*.*" to reconstruct the internal path that callers expect.
+    if (bIsTreeWindow && (lpszDirPath || GetWindowLongPtr(hwnd, GWL_PATHLEN) != 0)) {
         AddBackslash(szTemp);
         lstrcat(szTemp, kStarDotStar);
     }
@@ -564,10 +578,38 @@ int GetMDIWindowText(HWND hwnd, LPWSTR szTitle, int size) {
 //
 /////////////////////////////////////////////////////////////////////
 
+// Extract the last path component from a directory path for display.
+// For "C:\Users\Foo\Documents" returns "Documents".
+// For root paths like "C:\" returns "C:\".
+static void GetLastPathComponent(LPCWSTR szDirPath, LPWSTR szOut) {
+    LPCWSTR pLast = wcsrchr(szDirPath, CHAR_BACKSLASH);
+    if (pLast && *(pLast + 1)) {
+        // There's content after the last backslash
+        lstrcpy(szOut, pLast + 1);
+    } else {
+        // Root path or no backslash — use the whole string
+        lstrcpy(szOut, szDirPath);
+    }
+}
+
+// Store the full directory path (without filespec) in GWL_DIRPATH.
+static void StoreDirPath(HWND hwnd, LPCWSTR szDirPath) {
+    LPWSTR lpszOld = (LPWSTR)GetWindowLongPtr(hwnd, GWL_DIRPATH);
+    if (lpszOld)
+        LocalFree(lpszOld);
+
+    LPWSTR lpszNew = (LPWSTR)LocalAlloc(LPTR, ByteCountOf(lstrlen(szDirPath) + 1));
+    if (lpszNew)
+        lstrcpy(lpszNew, szDirPath);
+
+    SetWindowLongPtr(hwnd, GWL_DIRPATH, (LONG_PTR)lpszNew);
+}
+
 void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
     WCHAR szTemp[MAXPATHLEN * 2 + 10];
     WCHAR szNumber[20];
     WCHAR szDisplay[MAXPATHLEN * 2 + 10];
+    WCHAR szDirPath[MAXPATHLEN * 2 + 10];
     HWND hwndT;
     int num, max_num, cur_num;
     LPWSTR lpszVolShare;
@@ -592,10 +634,11 @@ void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
                 continue;
 
             if (!max_num && !num) {
-                // Construct display title for the other window: strip filespec
-                lstrcpy(szDisplay, szTemp);
-                StripFilespec(szDisplay);
-                StripBackslash(szDisplay);
+                // Construct display title for the other window: last path component
+                lstrcpy(szDirPath, szTemp);
+                StripFilespec(szDirPath);
+                StripBackslash(szDirPath);
+                GetLastPathComponent(szDirPath, szDisplay);
 
                 DWORD Length = lstrlen(szDisplay);
 
@@ -623,10 +666,14 @@ void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
         wsprintf(szNumber, L":%d", max_num);
     }
 
-    // Construct display title: strip filespec to show just the directory path
-    lstrcpy(szDisplay, szTitle);
-    StripFilespec(szDisplay);
-    StripBackslash(szDisplay);
+    // Get the full directory path and store it for GetMDIWindowText
+    lstrcpy(szDirPath, szTitle);
+    StripFilespec(szDirPath);
+    StripBackslash(szDirPath);
+    StoreDirPath(hwnd, szDirPath);
+
+    // Display just the last path component in the title bar
+    GetLastPathComponent(szDirPath, szDisplay);
 
     UINT uDisplayLen = lstrlen(szDisplay);
 

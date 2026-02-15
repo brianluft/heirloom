@@ -61,20 +61,24 @@ class WinfileMinimizedWindowList : public libheirloom::MinimizedWindowListContro
     static std::wstring shortenPath(const WCHAR* title) {
         std::wstring fullTitle = title;
 
-        // For search windows, keep the title as-is (e.g. "Search Results: ...")
-        // For tree windows, extract a shortened path
         if (fullTitle.empty()) {
             return L"(untitled)";
         }
 
-        // Try to find the last path component
-        // Window titles are typically like "C:\Users\Foo\Bar"
-        size_t lastSlash = fullTitle.rfind(L'\\');
-        if (lastSlash != std::wstring::npos && lastSlash > 0) {
-            // Find the second-to-last slash for "parent\leaf" format
-            size_t secondSlash = fullTitle.rfind(L'\\', lastSlash - 1);
-            if (secondSlash != std::wstring::npos) {
-                return L"..." + fullTitle.substr(secondSlash);
+        // Window titles are already just the last path component (e.g. "Documents")
+        // or a search title. Strip any ":N" duplicate suffix for a cleaner label.
+        size_t colonPos = fullTitle.rfind(L':');
+        if (colonPos != std::wstring::npos && colonPos > 0) {
+            // Only strip if everything after the colon is digits (duplicate number)
+            bool allDigits = true;
+            for (size_t i = colonPos + 1; i < fullTitle.size(); i++) {
+                if (fullTitle[i] < L'0' || fullTitle[i] > L'9') {
+                    allDigits = false;
+                    break;
+                }
+            }
+            if (allDigits && colonPos + 1 < fullTitle.size()) {
+                return fullTitle.substr(0, colonPos);
             }
         }
 

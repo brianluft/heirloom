@@ -852,7 +852,7 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     wndClass.lpfnWndProc = TreeWndProc;
     // wndClass.cbClsExtra     = 0;
 
-    wndClass.cbWndExtra = GWL_LASTFOCUS + sizeof(LONG_PTR);
+    wndClass.cbWndExtra = GWL_DIRPATH + sizeof(LONG_PTR);
 
     // wndClass.hInstance      = hInstance;
     wndClass.hIcon = NULL;
