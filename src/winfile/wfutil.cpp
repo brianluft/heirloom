@@ -667,6 +667,12 @@ void SetMDIWindowText(HWND hwnd, LPWSTR szTitle) {
     szTitle[uTitleLen] = CHAR_NULL;
 
     SaveHistoryDir(hwnd, szTitle);
+
+    // If this is the active MDI child, update the toolbar path
+    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+    if (hwnd == hwndActive && bDriveBar) {
+        UpdateToolbarState(hwndActive);
+    }
 }
 
 #define ISDIGIT(c) ((c) >= TEXT('0') && (c) <= TEXT('9'))

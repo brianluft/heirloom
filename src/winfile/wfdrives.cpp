@@ -317,10 +317,8 @@ struct ToolbarMetrics {
     int padding;
     int leftMargin;
     int sepWidth;
-    int comboWidth;
-    int comboHeight;
+    int comboDropdownHeight;
     int spacing;
-    int toolbarX;
 };
 
 static ToolbarMetrics GetToolbarMetrics(UINT dpi) {
@@ -328,10 +326,8 @@ static ToolbarMetrics GetToolbarMetrics(UINT dpi) {
     m.padding = ScaleValueForDpi(4, dpi);
     m.leftMargin = ScaleValueForDpi(4, dpi);
     m.sepWidth = ScaleValueForDpi(8, dpi);
-    m.comboWidth = ScaleValueForDpi(60, dpi);
-    m.comboHeight = ScaleValueForDpi(200, dpi);
+    m.comboDropdownHeight = ScaleValueForDpi(200, dpi);
     m.spacing = ScaleValueForDpi(8, dpi);
-    m.toolbarX = m.leftMargin + m.comboWidth + m.spacing;
     return m;
 }
 
@@ -508,17 +504,28 @@ void UpdateToolbarState(HWND hwndActive) {
         EnableWindow(hwndLocationCombo, bEnable);
     }
 
-    // Update combobox selection to match active window's drive
+    // Update combobox to show the active window's full path
     if (hwndLocationCombo && hwndActive) {
         DRIVE drive = (DRIVE)GetWindowLongPtr(hwndActive, GWL_TYPE);
         if (drive == TYPE_SEARCH) {
             drive = (DRIVE)SendMessage(hwndSearch, FS_GETDRIVE, 0, 0L) - CHAR_A;
         }
+
+        // Select the drive item so the correct drive icon shows
         for (int i = 0; i < cDrives; i++) {
             if (rgiDrive[i] == drive) {
                 SendMessage(hwndLocationCombo, CB_SETCURSEL, i, 0);
                 break;
             }
+        }
+
+        // Override the edit text with the full directory path
+        WCHAR szPath[MAXPATHLEN];
+        SendMessage(hwndActive, FS_GETDIRECTORY, MAXPATHLEN, (LPARAM)szPath);
+        StripBackslash(szPath);
+        HWND hwndEdit = (HWND)SendMessage(hwndLocationCombo, CBEM_GETEDITCONTROL, 0, 0);
+        if (hwndEdit) {
+            SetWindowTextW(hwndEdit, szPath);
         }
     }
 
@@ -575,7 +582,7 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
             hwndLocationCombo = CreateWindowExW(
                 0, WC_COMBOBOXEXW, NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL,
-                m.leftMargin, 0, m.comboWidth, m.comboHeight, hWnd, (HMENU)(INT_PTR)IDC_LOCATION_COMBO, hAppInstance,
+                m.leftMargin, 0, 100, m.comboDropdownHeight, hWnd, (HMENU)(INT_PTR)IDC_LOCATION_COMBO, hAppInstance,
                 NULL);
 
             if (hwndLocationCombo) {
@@ -589,7 +596,7 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 0, TOOLBARCLASSNAMEW, NULL,
                 WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE |
                     CCS_NOPARENTALIGN,
-                m.toolbarX, 0, 0, 0, hWnd, (HMENU)(INT_PTR)IDC_TOOLBAR_BUTTONS, hAppInstance, NULL);
+                0, 0, 0, 0, hWnd, (HMENU)(INT_PTR)IDC_TOOLBAR_BUTTONS, hAppInstance, NULL);
 
             if (hwndToolbarCtrl) {
                 SendMessage(hwndToolbarCtrl, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
@@ -622,33 +629,40 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 SendMessage(hwndToolbarCtrl, TB_ADDBUTTONS, NUM_TOOLBAR_BUTTONS, (LPARAM)tbb);
                 SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
 
-                // Size the toolbar control
-                RECT rcToolbar;
-                SendMessage(hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
-                SetWindowPos(hwndToolbarCtrl, NULL, m.toolbarX, 0, rcToolbar.right, rcToolbar.bottom, SWP_NOZORDER);
+                SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
             }
 
             break;
         }
 
         case WM_SIZE: {
+            int cx = LOWORD(lParam);
             int cy = HIWORD(lParam);
             ToolbarMetrics m = GetToolbarMetrics(GetDpiForWindow(hWnd));
 
+            // Get toolbar button area width and right-align it
+            int toolbarWidth = 0;
+            int toolbarHeight = 0;
+            if (hwndToolbarCtrl) {
+                RECT rcToolbar;
+                SendMessage(hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
+                toolbarWidth = rcToolbar.right;
+                toolbarHeight = rcToolbar.bottom;
+                int toolbarX = cx - toolbarWidth;
+                int toolbarY = max(0, (cy - toolbarHeight) / 2);
+                SetWindowPos(hwndToolbarCtrl, NULL, toolbarX, toolbarY, toolbarWidth, toolbarHeight, SWP_NOZORDER);
+            }
+
+            // Stretch combobox to fill remaining space
             if (hwndLocationCombo) {
+                int comboRight = cx - toolbarWidth - m.spacing;
+                int comboWidth = max(60, comboRight - m.leftMargin);
                 RECT rcCombo;
                 GetWindowRect(hwndLocationCombo, &rcCombo);
                 int comboH = rcCombo.bottom - rcCombo.top;
                 int comboY = max(0, (cy - comboH) / 2);
-                SetWindowPos(hwndLocationCombo, NULL, m.leftMargin, comboY, m.comboWidth, m.comboHeight, SWP_NOZORDER);
-            }
-
-            if (hwndToolbarCtrl) {
-                RECT rcToolbar;
-                SendMessage(hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
-                int toolbarY = max(0, (cy - rcToolbar.bottom) / 2);
                 SetWindowPos(
-                    hwndToolbarCtrl, NULL, m.toolbarX, toolbarY, rcToolbar.right, rcToolbar.bottom, SWP_NOZORDER);
+                    hwndLocationCombo, NULL, m.leftMargin, comboY, comboWidth, m.comboDropdownHeight, SWP_NOZORDER);
             }
             break;
         }
