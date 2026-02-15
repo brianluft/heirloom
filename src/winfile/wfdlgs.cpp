@@ -403,43 +403,164 @@ void NewFont() {
     DeleteObject(hOldFont);  // done with this now, delete it
 }
 
-/*--------------------------------------------------------------------------*/
-/*                                                                          */
-/*  ConfirmDlgProc() -                                                      */
-/*                                                                          */
-/*--------------------------------------------------------------------------*/
+static void UpdateFontLabel(HWND hDlg) {
+    LOGFONT lf;
+    GetObject(hFont, sizeof(lf), &lf);
 
-INT_PTR
-CALLBACK
-ConfirmDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
-    UNREFERENCED_PARAMETER(lParam);
+    HDC hdc = GetDC(NULL);
+    int pointSize = MulDiv(-lf.lfHeight, 72, GetDeviceCaps(hdc, LOGPIXELSY));
+    ReleaseDC(NULL, hdc);
+
+    WCHAR szLabel[LF_FACESIZE + 16];
+    wsprintf(szLabel, L"%s, %dpt", lf.lfFaceName, pointSize);
+    SetDlgItemText(hDlg, IDC_FONT_LABEL, szLabel);
+}
+
+// Applies a LOGFONT as the current font, updating all windows.
+// If hOldFont is non-NULL, it is deleted after the new font is applied.
+static void ApplyFont(LOGFONT* plf, HFONT hOldFont) {
+    HFONT hNewFont = CreateFontIndirect(plf);
+    if (!hNewFont)
+        return;
+
+    hFont = hNewFont;
+
+    if (plf->lfItalic != 0)
+        wTextAttribs |= TA_ITALIC;
+    else
+        wTextAttribs &= ~TA_ITALIC;
+
+    // Recalculate text metrics
+    HDC hdc = GetDC(NULL);
+    HANDLE hOld = SelectObject(hdc, hFont);
+    GetTextStuff(hdc);
+    if (hOld)
+        SelectObject(hdc, hOld);
+    ReleaseDC(NULL, hdc);
+
+    RepaintDrivesForFontChange((HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L));
+
+    // Update all listboxes
+    for (HWND hwnd = GetWindow(hwndMDIClient, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+        if (GetWindow(hwnd, GW_OWNER))
+            continue;
+
+        if ((int)GetWindowLongPtr(hwnd, GWL_TYPE) == TYPE_SEARCH) {
+            SendMessage((HWND)GetDlgItem(hwnd, IDCW_LISTBOX), WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+            SendMessage((HWND)GetDlgItem(hwnd, IDCW_LISTBOX), LB_SETITEMHEIGHT, 0, (LONG)dyFileName);
+            SendMessage(hwnd, FS_CHANGEDISPLAY, CD_SEARCHFONT, 0L);
+        } else {
+            HWND hwndT;
+            if (hwndT = HasDirWindow(hwnd)) {
+                HWND hwndT2 = GetDlgItem(hwndT, IDCW_LISTBOX);
+                SetLBFont(
+                    hwndT, hwndT2, hFont, (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW),
+                    (LPXDTALINK)GetWindowLongPtr(hwndT, GWL_HDTA));
+                InvalidateRect(hwndT2, NULL, TRUE);
+            }
+
+            if (hwndT = HasTreeWindow(hwnd)) {
+                hwndT = GetDlgItem(hwndT, IDCW_TREELISTBOX);
+                SendMessage(hwndT, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
+                SendMessage(hwndT, LB_SETITEMHEIGHT, 0, (LONG)dyFileName);
+                SendMessage(HasTreeWindow(hwnd), TC_RECALC_EXTENT, (WPARAM)hwndT, 0L);
+            }
+        }
+    }
+
+    if (hOldFont)
+        DeleteObject(hOldFont);
+}
+
+static void SaveFontToINI(LOGFONT* plf, int iPointSize) {
+    WCHAR szBuf[10];
+    wsprintf(szBuf, SZ_PERCENTD, iPointSize);
+    WritePrivateProfileString(kSettings, kFace, plf->lfFaceName, szTheINIFile);
+    WritePrivateProfileString(kSettings, kSize, szBuf, szTheINIFile);
+    WritePrivateProfileBool(kLowerCase, wTextAttribs);
+    WritePrivateProfileBool(kFaceWeight, plf->lfWeight);
+}
+
+INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
+    WCHAR szTempEditPath[MAXPATHLEN];
+    WCHAR szPath[MAXPATHLEN];
+    WCHAR szFilter[MAXPATHLEN] = { 0 };
+
+    // Saved font state for cancel/revert
+    static LOGFONT lfOriginal;
+    static int iOriginalPointSize;
+    static WORD wOriginalTextAttribs;
+    static BOOL bFontChanged;
 
     switch (wMsg) {
         case WM_INITDIALOG:
+            // Save original font for potential revert
+            GetObject(hFont, sizeof(lfOriginal), &lfOriginal);
+            {
+                HDC hdc = GetDC(NULL);
+                iOriginalPointSize = MulDiv(-lfOriginal.lfHeight, 72, GetDeviceCaps(hdc, LOGPIXELSY));
+                ReleaseDC(NULL, hdc);
+            }
+            wOriginalTextAttribs = wTextAttribs;
+            bFontChanged = FALSE;
+
+            // Confirmation checkboxes
             CheckDlgButton(hDlg, IDD_DELETE, bConfirmDelete);
             CheckDlgButton(hDlg, IDD_SUBDEL, bConfirmSubDel);
             CheckDlgButton(hDlg, IDD_REPLACE, bConfirmReplace);
             CheckDlgButton(hDlg, IDD_MOUSE, bConfirmMouse);
             CheckDlgButton(hDlg, IDD_CONFIG, bConfirmFormat);
             CheckDlgButton(hDlg, IDD_READONLY, bConfirmReadOnly);
+
+            // Font label
+            UpdateFontLabel(hDlg);
+
+            // Editor path
+            GetPrivateProfileString(kSettings, kEditorPath, NULL, szTempEditPath, MAXPATHLEN, szTheINIFile);
+            SetDlgItemText(hDlg, IDD_EDITOR, szTempEditPath);
+
+            // Minimize on use
+            CheckDlgButton(hDlg, IDC_MINONRUN, bMinOnRun);
             break;
 
         case WM_COMMAND:
             switch (GET_WM_COMMAND_ID(wParam, lParam)) {
-                case IDD_HELP:
-                    goto DoHelp;
-
-                case IDCANCEL:
-                    EndDialog(hDlg, FALSE);
+                case IDC_FONT_CHANGE:
+                    NewFont();
+                    UpdateFontLabel(hDlg);
+                    bFontChanged = TRUE;
                     break;
 
+                case IDC_EDITOR: {
+                    LoadString(hAppInstance, IDS_EDITFILTER, szFilter, MAXPATHLEN);
+
+                    OPENFILENAME ofn;
+                    ZeroMemory(&ofn, sizeof(ofn));
+                    ofn.lStructSize = sizeof(ofn);
+                    ofn.hwndOwner = hDlg;
+                    ofn.lpstrFile = szPath;
+                    ofn.lpstrFile[0] = '\0';
+                    ofn.nMaxFile = COUNTOF(szPath);
+                    ofn.lpstrFilter = szFilter;
+                    ofn.nFilterIndex = 1;
+                    ofn.lpstrFileTitle = NULL;
+                    ofn.nMaxFileTitle = 0;
+                    ofn.lpstrInitialDir = NULL;
+                    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+                    if (GetOpenFileNameW(&ofn)) {
+                        SetDlgItemText(hDlg, IDD_EDITOR, ofn.lpstrFile);
+                    }
+                    break;
+                }
+
                 case IDOK:
+                    // Save confirmation settings
                     bConfirmDelete = IsDlgButtonChecked(hDlg, IDD_DELETE);
                     bConfirmSubDel = IsDlgButtonChecked(hDlg, IDD_SUBDEL);
                     bConfirmReplace = IsDlgButtonChecked(hDlg, IDD_REPLACE);
                     bConfirmMouse = IsDlgButtonChecked(hDlg, IDD_MOUSE);
                     bConfirmFormat = IsDlgButtonChecked(hDlg, IDD_CONFIG);
-
                     bConfirmReadOnly = IsDlgButtonChecked(hDlg, IDD_READONLY);
 
                     WritePrivateProfileBool(kConfirmDelete, bConfirmDelete);
@@ -447,88 +568,39 @@ ConfirmDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                     WritePrivateProfileBool(kConfirmReplace, bConfirmReplace);
                     WritePrivateProfileBool(kConfirmMouse, bConfirmMouse);
                     WritePrivateProfileBool(kConfirmFormat, bConfirmFormat);
-
                     WritePrivateProfileBool(kConfirmReadOnly, bConfirmReadOnly);
 
-                    EndDialog(hDlg, TRUE);
-                    break;
-
-                default:
-                    return (FALSE);
-            }
-            break;
-
-        default:
-            if (wMsg == wHelpMessage) {
-            DoHelp:
-                return TRUE;
-            } else
-                return FALSE;
-    }
-    return TRUE;
-}
-
-INT_PTR CALLBACK PrefDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
-    /* Editor prefrence variables*/
-    WCHAR szTempEditPath[MAXPATHLEN];
-    WCHAR szPath[MAXPATHLEN];
-    WCHAR szFilter[MAXPATHLEN] = { 0 };
-
-    LoadString(hAppInstance, IDS_EDITFILTER, szFilter, MAXPATHLEN);
-
-    OPENFILENAME ofn;
-
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hDlg;
-    ofn.lpstrFile = szPath;
-    ofn.lpstrFile[0] = '\0';
-    ofn.nMaxFile = sizeof(szPath);
-    ofn.lpstrFilter = szFilter;
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    switch (wMsg) {
-        case WM_INITDIALOG:
-            GetPrivateProfileString(kSettings, kEditorPath, NULL, szTempEditPath, MAXPATHLEN, szTheINIFile);
-            SetDlgItemText(hDlg, IDD_EDITOR, szTempEditPath);
-
-            break;
-
-        case WM_COMMAND:
-            switch (GET_WM_COMMAND_ID(wParam, lParam)) {
-                case IDD_HELP:
-                    goto DoHelp;
-
-                case IDC_EDITOR:
-                    if (GetOpenFileNameW(&ofn)) {
-                        wcscpy_s(szPath, MAXPATHLEN, ofn.lpstrFile);
-                        SetDlgItemText(hDlg, IDD_EDITOR, szPath);
-                    }
-                    break;
-
-                case IDOK:
+                    // Save editor path
                     GetDlgItemText(hDlg, IDD_EDITOR, szTempEditPath, MAXPATHLEN);
                     WritePrivateProfileString(kSettings, kEditorPath, szTempEditPath, szTheINIFile);
+
+                    // Save minimize on use
+                    bMinOnRun = IsDlgButtonChecked(hDlg, IDC_MINONRUN);
+                    WritePrivateProfileBool(kMinOnRun, bMinOnRun);
+
+                    // Save all window settings
+                    SaveWindows(hwndFrame);
 
                     EndDialog(hDlg, TRUE);
                     break;
 
                 case IDCANCEL:
+                    // Revert font change if one was made
+                    if (bFontChanged) {
+                        wTextAttribs = wOriginalTextAttribs;
+                        ApplyFont(&lfOriginal, hFont);
+                        SaveFontToINI(&lfOriginal, iOriginalPointSize);
+                    }
                     EndDialog(hDlg, FALSE);
                     break;
+
+                default:
+                    return FALSE;
             }
             break;
 
         default:
-            if (wMsg == wHelpMessage) {
-            DoHelp:
-                return TRUE;
-            } else
-                return FALSE;
+            return FALSE;
     }
     return TRUE;
 }

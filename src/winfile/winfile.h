@@ -625,7 +625,6 @@ Extern BOOL bConfirmMouse EQ(TRUE);
 Extern BOOL bConfirmFormat EQ(TRUE);
 Extern BOOL bConfirmReadOnly EQ(TRUE);
 
-Extern BOOL bSaveSettings EQ(TRUE);
 Extern BOOL bScrollOnExpand EQ(TRUE);
 
 Extern BOOL bConnectable EQ(FALSE);

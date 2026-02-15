@@ -16,7 +16,6 @@ constexpr WCHAR kEditorPath[] = L"EditorPath";
 constexpr WCHAR kMirrorContent[] = L"MirrorContent";
 constexpr WCHAR kMinOnRun[] = L"MinOnRun";
 constexpr WCHAR kStatusBar[] = L"StatusBar";
-constexpr WCHAR kSaveSettings[] = L"Save Settings";
 constexpr WCHAR kScrollOnExpand[] = L"ScrollOnExpand";
 
 constexpr WCHAR kConfirmDelete[] = L"ConfirmDelete";

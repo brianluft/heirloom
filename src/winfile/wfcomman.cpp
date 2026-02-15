@@ -1712,11 +1712,6 @@ BOOL AppCommandProc(DWORD id) {
             break;
         }
 
-        case IDM_SAVENOW:
-
-            SaveWindows(hwndFrame);
-            break;
-
         case IDM_EXIT:
 
             // SHIFT Exit saves settings, doesn't exit.
@@ -1736,8 +1731,7 @@ BOOL AppCommandProc(DWORD id) {
 
             SetCurrentDirectory(szOriginalDirPath);
 
-            if (bSaveSettings)
-                SaveWindows(hwndFrame);
+            SaveWindows(hwndFrame);
 
             return FALSE;
             break;
@@ -1798,12 +1792,8 @@ BOOL AppCommandProc(DWORD id) {
 
             break;
 
-        case IDM_CONFIRM:
-            DialogBox(hAppInstance, (LPWSTR)MAKEINTRESOURCE(CONFIRMDLG), hwndFrame, ConfirmDlgProc);
-            break;
-
-        case IDM_PREF:
-            DialogBox(hAppInstance, (LPWSTR)MAKEINTRESOURCE(PREFDLG), hwndFrame, PrefDlgProc);
+        case IDM_OPTIONS:
+            DialogBox(hAppInstance, (LPWSTR)MAKEINTRESOURCE(OPTIONSDLG), hwndFrame, OptionsDlgProc);
             break;
 
         case IDM_STATUSBAR:
@@ -1829,20 +1819,6 @@ BOOL AppCommandProc(DWORD id) {
         case IDM_DRIVELISTJUMP:
             // Drive list functionality removed
             break;
-
-        case IDM_FONT:
-            NewFont();
-            break;
-
-        case IDM_SAVESETTINGS:
-            bTemp = bSaveSettings = !bSaveSettings;
-            WritePrivateProfileBool(kSaveSettings, bSaveSettings);
-            goto CHECK_OPTION;
-
-        case IDM_MINONRUN:
-            bTemp = bMinOnRun = !bMinOnRun;
-            WritePrivateProfileBool(kMinOnRun, bMinOnRun);
-            goto CHECK_OPTION;
 
         CHECK_OPTION:
             //

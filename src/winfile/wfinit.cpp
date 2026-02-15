@@ -191,7 +191,6 @@ void GetSettings() {
     bConfirmFormat = GetPrivateProfileInt(kSettings, kConfirmFormat, bConfirmFormat, szTheINIFile);
     bConfirmReadOnly = GetPrivateProfileInt(kSettings, kConfirmReadOnly, bConfirmReadOnly, szTheINIFile);
     uChangeNotifyTime = GetPrivateProfileInt(kSettings, kChangeNotifyTime, uChangeNotifyTime, szTheINIFile);
-    bSaveSettings = GetPrivateProfileInt(kSettings, kSaveSettings, bSaveSettings, szTheINIFile);
     bScrollOnExpand = GetPrivateProfileInt(kSettings, kScrollOnExpand, bScrollOnExpand, szTheINIFile);
     weight = GetPrivateProfileInt(kSettings, kFaceWeight, 400, szTheINIFile);
 
@@ -252,10 +251,6 @@ void InitMenus() {
 
     if (bStatusBar)
         CheckMenuItem(hMenu, IDM_STATUSBAR, MF_BYCOMMAND | MF_CHECKED);
-    if (bMinOnRun)
-        CheckMenuItem(hMenu, IDM_MINONRUN, MF_BYCOMMAND | MF_CHECKED);
-    if (bSaveSettings)
-        CheckMenuItem(hMenu, IDM_SAVESETTINGS, MF_BYCOMMAND | MF_CHECKED);
 
     if (bDriveBar)
         CheckMenuItem(hMenu, IDM_DRIVEBAR, MF_BYCOMMAND | MF_CHECKED);
@@ -777,14 +772,6 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     // Read WINFILE.INI and set the appropriate variables.
     //
     GetSettings();
-
-    //
-    // If the user specified an initial directory on the command line, that
-    // directory will be opened, and save settings is disabled by default.
-    //
-    if (pszInitialDir != NULL) {
-        bSaveSettings = FALSE;
-    }
 
     dyBorder = ScaledSystemMetric(SM_CYBORDER);
     dyBorderx2 = dyBorder * 2;

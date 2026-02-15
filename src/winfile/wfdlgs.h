@@ -21,8 +21,7 @@
 #define FORMAT2DLG 25
 #define OTHERDLG 30
 #define SORTBYDLG 31
-#define CONFIRMDLG 33
-#define PREFDLG 34
+#define OPTIONSDLG 55
 #define DMSTATUSDLG 35
 #define PRTDLG 36
 #define CHOOSENETDRIVEDLG 37
@@ -141,6 +140,11 @@
 
 #define IDD_ENCRYPTED 279
 
+// Options dialog controls
+#define IDC_FONT_LABEL 280
+#define IDC_FONT_CHANGE 281
+#define IDC_MINONRUN 282
+
 #define IDD_NEW 300
 #define IDD_DESC 301
 #define IDD_DESCTEXT 302
@@ -203,6 +207,5 @@ INT_PTR CALLBACK AttribsDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPar
 INT_PTR CALLBACK MakeDirDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK OtherDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK ProgressDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK ConfirmDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK PrefDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK AboutDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);

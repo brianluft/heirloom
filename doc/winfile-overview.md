@@ -112,6 +112,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Accelerator Keys** - Keyboard shortcut handling and conflicts
 - **Menu State Management** - Enable/disable states based on current selection
 - **Extension Support** - Third-party menu extension integration
+- **Menu Structure** - File, Edit, View (with Drivebar/Status bar toggles), Tools (Options dialog), Bookmarks, Window, Help
 - **ZIP Archive Submenu** - Archive creation and extraction commands with selection-based enabling
   - **Smart Naming** - "Add to Zip" command uses improved logic to name archives after the containing folder, with fallback handling for root paths
   - **Path Handling** - Proper path construction prevents double backslashes in archive file paths
@@ -238,7 +239,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Extension Framework**: `wfext.cpp` - Plugin support infrastructure
 
 ### Configuration and Data
-- **Settings Storage**: Windows registry and INI file support for configuration
+- **Settings Storage**: INI file for configuration; settings are always saved on exit and when closing the Options dialog
 - **Icon Resources**: Comprehensive icon sets for files, folders, and drives
 - **Help Integration**: Windows Help system integration for user assistance
 

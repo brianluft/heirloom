@@ -229,25 +229,18 @@ BEGIN
     MENUITEM    "Sort by si&ze",        IDM_BYSIZE
     MENUITEM    "Sort by &date",        IDM_BYDATE
     MENUITEM    "Sort &forward date",   IDM_BYFDATE
-    END
-    POPUP       "&Options"
-    BEGIN
-    MENUITEM    "&Confirmation...",          IDM_CONFIRM
-    MENUITEM    "&Font...",                  IDM_FONT
-    MENUITEM    "Additional &preferences...", IDM_PREF
     MENUITEM    SEPARATOR
     MENUITEM    "&Drivebar",                IDM_DRIVEBAR
-    MENUITEM    "&Status bar",              IDM_STATUSBAR
-    MENUITEM    SEPARATOR
-    MENUITEM    "&Minimize on use",         IDM_MINONRUN
-    MENUITEM    "Save settings on &exit",   IDM_SAVESETTINGS
-    MENUITEM    SEPARATOR
-    MENUITEM    "Save settings &now",       IDM_SAVENOW
+    MENUITEM    "S&tatus bar",              IDM_STATUSBAR
     END
     POPUP       "&Bookmarks"
     BEGIN
     MENUITEM    "&Add bookmark...\tCtrl+D",     IDM_ADDBOOKMARK
     MENUITEM    "&Manage bookmarks",            IDM_MANAGEBOOKMARKS
+    END
+    POPUP       "&Tools"
+    BEGIN
+    MENUITEM    "&Options...",              IDM_OPTIONS
     END
     POPUP       "&Window"
     BEGIN
@@ -652,15 +645,11 @@ BEGIN
     MH_MYITEMS+IDM_BYDATE,      "Sorts files by date"
     MH_MYITEMS+IDM_BYFDATE,     "Sorts files by forward date"
 
-    MH_MYITEMS+IDM_CONFIRM,     "Controls confirmation messages"
-    MH_MYITEMS+IDM_FONT,        "Changes the Heirloom File Manager font"
+    MH_MYITEMS+IDM_OPTIONS,     "Changes Heirloom File Manager options"
 
     MH_MYITEMS+IDM_DRIVEBAR,    "Displays or hides the drivebar"
     MH_MYITEMS+IDM_STATUSBAR,   "Displays or hides the status bar"
     MH_MYITEMS+IDM_NEWWINONCONNECT,     "Opens a new window when you connect"
-
-    MH_MYITEMS+IDM_MINONRUN,    "Reduces Heirloom File Manager to an icon at startup"
-    MH_MYITEMS+IDM_SAVESETTINGS,        "Saves settings when you quit Heirloom File Manager"
 
     MH_MYITEMS+IDM_NEWWINDOW,   "Opens a new window"
     MH_MYITEMS+IDM_CASCADE,     "Cascades windows"
@@ -979,23 +968,6 @@ END
 
 
 
-CONFIRMDLG DIALOGEX 20, 20, 193, 141
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Confirmation"
-FONT 9, "Segoe UI", 400, 0, 0x0
-BEGIN
-    GROUPBOX        "Prompt for confirmation before...",IDD_TEXT,7,7,175,105,WS_TABSTOP
-    CONTROL         "&Deleting files",IDD_DELETE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,21,59,10
-    CONTROL         "Deleting f&olders",IDD_SUBDEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,35,80,10
-    CONTROL         "&Overwriting files",IDD_REPLACE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,70,10
-    CONTROL         "&Mouse actions",IDD_MOUSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,63,64,10
-    CONTROL         "Dis&k commands",IDD_CONFIG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,77,68,10
-    CONTROL         "Modifying &system, hidden, or read only files",IDD_READONLY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,91,160,10
-    DEFPUSHBUTTON   "OK",1,77,119,50,14
-    PUSHBUTTON      "Cancel",2,133,119,50,14
-END
-
 DMSTATUSDLG DIALOG 20, 20, 250, 46
 CAPTION "Moving..."
 FONT 8, "MS Shell Dlg"
@@ -1036,17 +1008,31 @@ CONTROL "Cancel", IDCANCEL, "button", BS_PUSHBUTTON | WS_TABSTOP | WS_CHILD, 205
 END
 
 
-
-PREFDLG DIALOGEX 20, 20, 235, 113
+OPTIONSDLG DIALOGEX 20, 20, 424, 183
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Preferences"
+CAPTION "Options"
 FONT 9, "Segoe UI", 400, 0, 0x0
 BEGIN
-    LTEXT           "Editor path:",IDD_TEXT,7,11,39,8
-    EDITTEXT        IDD_EDITOR,7,21,217,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "Browse...",IDC_EDITOR,175,35,50,14
-    PUSHBUTTON      "OK",IDOK,119,91,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,175,91,50,14
+    GROUPBOX        "&Font",IDD_TEXT2,7,7,210,35
+    LTEXT           "Font 99pt",IDC_FONT_LABEL,14,21,140,10
+    PUSHBUTTON      "Change...",IDC_FONT_CHANGE,161,18,50,14
+    GROUPBOX        "Edit command",IDD_DIRS,7,91,210,56
+    LTEXT           "Editor path:",IDD_VERTEXT,14,102,39,8
+    EDITTEXT        IDD_EDITOR,14,112,196,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...",IDC_EDITOR,161,126,50,14
+    GROUPBOX        "Open command",IDD_STATUS,7,49,210,35
+    CONTROL         "Minimi&ze on use",IDC_MINONRUN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,63,71,10
+    GROUPBOX        "Confirmation",IDD_TEXT,231,7,182,140
+    LTEXT           "Prompt for confirmation before:",IDD_TEXT1,238,21,160,8
+    CONTROL         "&Deleting files",IDD_DELETE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,35,59,10
+    CONTROL         "Deleting f&olders",IDD_SUBDEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,49,69,10
+    CONTROL         "&Overwriting files",IDD_REPLACE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,63,70,10
+    CONTROL         "&Mouse actions",IDD_MOUSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,91,64,10
+    CONTROL         "Dis&k commands",IDD_CONFIG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,105,68,10
+    CONTROL         "Modifying &system, hidden, or read only files",IDD_READONLY,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,77,160,10
+    DEFPUSHBUTTON   "OK",IDOK,308,161,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,366,161,50,14
 END
 
 
