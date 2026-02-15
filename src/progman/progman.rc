@@ -70,8 +70,8 @@ IDR_MAINMENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "New &Shortcut...\tCtrl+N",    ID_FILE_NEWSHORTCUT
-        MENUITEM "New &Folder...",              ID_FILE_NEWFOLDER
+        MENUITEM "New &shortcut...\tCtrl+N",    ID_FILE_NEWSHORTCUT
+        MENUITEM "New &folder...",              ID_FILE_NEWFOLDER
         MENUITEM SEPARATOR
         MENUITEM "Re&name",                     IDM_RENAME
         MENUITEM "&Delete\tCtrl+D",             ID_FILE_DELETE
@@ -86,7 +86,7 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "Visit &Website", ID_HELP_VISIT_WEBSITE
+        MENUITEM "Visit &website", ID_HELP_VISIT_WEBSITE
         MENUITEM SEPARATOR
         MENUITEM "&About Heirloom Program Manager", ID_HELP_ABOUT
     END

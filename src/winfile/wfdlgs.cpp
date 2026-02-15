@@ -574,6 +574,8 @@ void ActivateCommonContextMenu(HWND hwnd, HWND hwndLB, LPARAM lParam) {
 
     HMENU hMenu = GetSubMenu(LoadMenu(hAppInstance, L"CTXMENU"), 0);
 
+    SetMenuDefaultItem(hMenu, IDM_OPEN, FALSE);
+
     // Enable or disable the Git Bash shell menu item based on Git Bash availability
     auto gitBashPath = GetGitBashPath();
     EnableMenuItem(hMenu, IDM_STARTBASHSHELL, MF_BYCOMMAND | (gitBashPath.has_value() ? MF_ENABLED : MF_GRAYED));

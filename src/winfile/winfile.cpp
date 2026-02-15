@@ -153,6 +153,8 @@ BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) 
         BOOL bDir = TRUE;
         IDataObject* pDataObj;
 
+        SetMenuDefaultItem(hMenu, IDM_OPEN, FALSE);
+
         //
         // In order to avoid deleting the tree control pNodes while
         // a read is in progress, the Move, Copy, Delete, Rename, and

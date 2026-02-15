@@ -170,18 +170,18 @@ BEGIN
     MENUITEM    "&Open\tEnter",     IDM_OPEN
     MENUITEM    "Edit\tF12",        IDM_EDIT
     MENUITEM    SEPARATOR
-    MENUITEM    "&Move...\tF7",     IDM_MOVE
-    MENUITEM    "&Copy...\tF8",     IDM_COPY
+    MENUITEM    "&Move to...\tF7",  IDM_MOVE
+    MENUITEM    "&Copy to...\tF8",  IDM_COPY
     MENUITEM    "S&ymlink...\tF11", IDM_SYMLINK
     MENUITEM    "Hardlin&k...\tShift+F11", IDM_HARDLINK
-    POPUP       "&Zip Archive"
+    POPUP       "&Zip archive"
     BEGIN
-        MENUITEM    "Add to &Zip",           IDM_ZIPARCHIVE_ADDTOZIP
-        MENUITEM    "Add &To...",            IDM_ZIPARCHIVE_ADDTO
+        MENUITEM    "Add to &zip",           IDM_ZIPARCHIVE_ADDTOZIP
+        MENUITEM    "Add &to...",            IDM_ZIPARCHIVE_ADDTO
         MENUITEM    SEPARATOR
-        MENUITEM    "Extract &Here",         IDM_ZIPARCHIVE_EXTRACTHERE
-        MENUITEM    "Extract to &New Folder", IDM_ZIPARCHIVE_EXTRACTTONEWFOLDER
-        MENUITEM    "Extract T&o...",        IDM_ZIPARCHIVE_EXTRACTTO
+        MENUITEM    "Extract &here",         IDM_ZIPARCHIVE_EXTRACTHERE
+        MENUITEM    "Extract to &new folder", IDM_ZIPARCHIVE_EXTRACTTONEWFOLDER
+        MENUITEM    "Extract t&o...",        IDM_ZIPARCHIVE_EXTRACTTO
     END
     MENUITEM    SEPARATOR
     MENUITEM    "&Delete...\tDel",  IDM_DELETE
@@ -191,9 +191,9 @@ BEGIN
     MENUITEM    SEPARATOR
     MENUITEM    "&Run...",          IDM_RUN
     MENUITEM    SEPARATOR
-    MENUITEM    "Cr&eate Directory...\tCtrl+Shift+N", IDM_MAKEDIR
+    MENUITEM    "New &directory...\tCtrl+Shift+N", IDM_MAKEDIR
     MENUITEM    "Searc&h...\tCtrl+F",       IDM_SEARCH
-    MENUITEM    "Select &Files...", IDM_SELECT
+    MENUITEM    "Select &files...", IDM_SELECT
     POPUP       "Start (&.)"
     BEGIN
     MENUITEM    "Open Git Bash\tCtrl+B", IDM_STARTBASHSHELL
@@ -202,67 +202,67 @@ BEGIN
     MENUITEM    "Open Explorer\tCtrl+E", IDM_STARTEXPLORER
     END
     MENUITEM    SEPARATOR
-    MENUITEM    "Empty &Recycle Bin", IDM_EMPTYRECYCLE
+    MENUITEM    "Empty &recycle bin", IDM_EMPTYRECYCLE
     MENUITEM    SEPARATOR
     MENUITEM    "E&xit",            IDM_EXIT
     END
     POPUP       "&Edit"
     BEGIN
-    MENUITEM    "Cu&t\tCtrl+X", IDM_CUTTOCLIPBOARD
-    MENUITEM    "&Copy\tCtrl+C", IDM_COPYTOCLIPBOARD
+    MENUITEM    "Cu&t\tCtrl+X",     IDM_CUTTOCLIPBOARD
+    MENUITEM    "&Copy\tCtrl+C",    IDM_COPYTOCLIPBOARD
     MENUITEM    "&Paste\tCtrl+V",   IDM_PASTE
     END
     POPUP       "&View"
     BEGIN
-    MENUITEM    "T&ree and Directory",  IDM_BOTH
-    MENUITEM    "Tr&ee Only",           IDM_TREEONLY
-    MENUITEM    "Directory &Only",      IDM_DIRONLY
+    MENUITEM    "T&ree and directory",  IDM_BOTH
+    MENUITEM    "Tr&ee only",           IDM_TREEONLY
+    MENUITEM    "Directory &only",      IDM_DIRONLY
     MENUITEM    SEPARATOR
     MENUITEM    "Sp&lit",               IDM_SPLIT
     MENUITEM    SEPARATOR
     MENUITEM    "&Name",                IDM_VNAME
-    MENUITEM    "&All File Details",    IDM_VDETAILS,   CHECKED
-    MENUITEM    "&Partial Details...",  IDM_VOTHER
+    MENUITEM    "&All file details",    IDM_VDETAILS,   CHECKED
+    MENUITEM    "&Partial details...",  IDM_VOTHER
     MENUITEM    SEPARATOR
-    MENUITEM "&Sort by Name",   IDM_BYNAME
-    MENUITEM "Sort &by Type",   IDM_BYTYPE
-    MENUITEM "Sort by Si&ze",   IDM_BYSIZE
-    MENUITEM "Sort by &Date",   IDM_BYDATE
-    MENUITEM "Sort &forward Date",   IDM_BYFDATE
+    MENUITEM    "&Sort by name",        IDM_BYNAME
+    MENUITEM    "Sort &by type",        IDM_BYTYPE
+    MENUITEM    "Sort by si&ze",        IDM_BYSIZE
+    MENUITEM    "Sort by &date",        IDM_BYDATE
+    MENUITEM    "Sort &forward date",   IDM_BYFDATE
     END
     POPUP       "&Options"
     BEGIN
-    MENUITEM    "&Confirmation...",     IDM_CONFIRM
-    MENUITEM    "&Font...",             IDM_FONT
-    MENUITEM    "Additional &Preferences...", IDM_PREF
+    MENUITEM    "&Confirmation...",          IDM_CONFIRM
+    MENUITEM    "&Font...",                  IDM_FONT
+    MENUITEM    "Additional &preferences...", IDM_PREF
     MENUITEM    SEPARATOR
     MENUITEM    "&Drivebar",                IDM_DRIVEBAR
-    MENUITEM    "&Status Bar",              IDM_STATUSBAR
+    MENUITEM    "&Status bar",              IDM_STATUSBAR
     MENUITEM    SEPARATOR
-    MENUITEM    "&Minimize on Use",     IDM_MINONRUN
-    MENUITEM    "Save Settings on &Exit",   IDM_SAVESETTINGS
+    MENUITEM    "&Minimize on use",         IDM_MINONRUN
+    MENUITEM    "Save settings on &exit",   IDM_SAVESETTINGS
     MENUITEM    SEPARATOR
-    MENUITEM    "Save Settings &Now",       IDM_SAVENOW
+    MENUITEM    "Save settings &now",       IDM_SAVENOW
     END
     POPUP       "&Bookmarks"
     BEGIN
-    MENUITEM    "&Add Bookmark...\tCtrl+D",       IDM_ADDBOOKMARK
-    MENUITEM    "&Manage Bookmarks",           IDM_MANAGEBOOKMARKS
+    MENUITEM    "&Add bookmark...\tCtrl+D",     IDM_ADDBOOKMARK
+    MENUITEM    "&Manage bookmarks",            IDM_MANAGEBOOKMARKS
     END
     POPUP       "&Window"
     BEGIN
-    MENUITEM    "&New Window\tCtrl+Shift Enter",          IDM_NEWWINDOW
-    MENUITEM    "&Cascade\tShift+F5",   IDM_CASCADE
-    MENUITEM    "Tile &Horizontally",   IDM_TILEHORIZONTALLY
-    MENUITEM    "&Tile Vertically\tShift+F4",      IDM_TILE
-    MENUITEM    "&Refresh\tF5",         IDM_REFRESH
+    MENUITEM    "&New window\tCtrl+Shift Enter",    IDM_NEWWINDOW
+    MENUITEM    "&Cascade\tShift+F5",               IDM_CASCADE
+    MENUITEM    "Tile &horizontally",               IDM_TILEHORIZONTALLY
+    MENUITEM    "&Tile vertically\tShift+F4",       IDM_TILE
+    MENUITEM    "&Refresh\tF5",                     IDM_REFRESH
     MENUITEM    SEPARATOR
-    MENUITEM    "&Back\tAlt+Left",      IDM_HISTORYBACK
-    MENUITEM    "&Forward\tAlt+Right",  IDM_HISTORYFWD
+    MENUITEM    "&Back\tAlt+Left",                  IDM_HISTORYBACK
+    MENUITEM    "&Forward\tAlt+Right",              IDM_HISTORYFWD
     END
     POPUP       "&Help"
     BEGIN
-    MENUITEM    "Visit &Website",                 IDM_VISIT_WEBSITE
+    MENUITEM    "Visit &website",                 IDM_VISIT_WEBSITE
     MENUITEM    SEPARATOR
     MENUITEM    "&About Heirloom File Manager",   IDM_ABOUT
     END
@@ -273,29 +273,30 @@ CTXMENU MENU
 BEGIN
     POPUP "Dummy Popup"
     BEGIN
-    MENUITEM    "&New Window\tCtrl+Shift Enter",     IDM_NEWWINDOW
+    MENUITEM    "Open in &new window\tCtrl+Shift Enter", IDM_NEWWINDOW
     MENUITEM    "&Open\tEnter",     IDM_OPEN
     MENUITEM    "Edit\tF12",        IDM_EDIT
+    MENUITEM    "New &directory...\tCtrl+Shift+N", IDM_MAKEDIR
     MENUITEM    SEPARATOR
-    MENUITEM    "&Move...\tF7",     IDM_MOVE
-    MENUITEM    "&Copy...\tF8",     IDM_COPY
+    MENUITEM    "&Move to...\tF7",  IDM_MOVE
+    MENUITEM    "&Copy to...\tF8",  IDM_COPY
     MENUITEM    "S&ymlink...\tF11", IDM_SYMLINK
     MENUITEM    "Hardlin&k...\tShift+F11", IDM_HARDLINK
-    POPUP       "&Zip Archive"
+    POPUP       "&Zip archive"
     BEGIN
-        MENUITEM    "Add to &Zip",           IDM_ZIPARCHIVE_ADDTOZIP
-        MENUITEM    "Add &To...",            IDM_ZIPARCHIVE_ADDTO
+        MENUITEM    "Add to &zip",           IDM_ZIPARCHIVE_ADDTOZIP
+        MENUITEM    "Add &to...",            IDM_ZIPARCHIVE_ADDTO
         MENUITEM    SEPARATOR
-        MENUITEM    "Extract &Here",         IDM_ZIPARCHIVE_EXTRACTHERE
-        MENUITEM    "Extract to &New Folder", IDM_ZIPARCHIVE_EXTRACTTONEWFOLDER
-        MENUITEM    "Extract T&o...",        IDM_ZIPARCHIVE_EXTRACTTO
+        MENUITEM    "Extract &here",         IDM_ZIPARCHIVE_EXTRACTHERE
+        MENUITEM    "Extract to &new folder", IDM_ZIPARCHIVE_EXTRACTTONEWFOLDER
+        MENUITEM    "Extract t&o...",        IDM_ZIPARCHIVE_EXTRACTTO
     END
     MENUITEM    SEPARATOR
-    MENUITEM    "Copy to Clip&board\tCtrl+C", IDM_COPYTOCLIPBOARD
-    MENUITEM    "Cut to Clipboard\tCtrl+X", IDM_CUTTOCLIPBOARD
-    MENUITEM    "&Paste\tCtrl+V", IDM_PASTE
+    MENUITEM    "&Copy\tCtrl+C",    IDM_COPYTOCLIPBOARD
+    MENUITEM    "Cu&t\tCtrl+X",     IDM_CUTTOCLIPBOARD
+    MENUITEM    "&Paste\tCtrl+V",   IDM_PASTE
     MENUITEM    SEPARATOR
-    MENUITEM    "&Delete\tDel",  IDM_DELETE
+    MENUITEM    "&Delete\tDel",     IDM_DELETE
     MENUITEM    "Re&name...\tF2",   IDM_RENAME
     MENUITEM    SEPARATOR
     MENUITEM    "&Run...",          IDM_RUN
