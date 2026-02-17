@@ -22,6 +22,7 @@
 #include "treectl.h"
 #include "wfsearch.h"
 #include "stringconstants.h"
+#include <shlobj.h>
 
 void CheckAttribsDlgButton(HWND hDlg, int id, DWORD dwAttribs, DWORD dwAttribs3State, DWORD dwAttribsOn);
 BOOL NoQuotes(LPWSTR szT);
@@ -113,6 +114,16 @@ SearchDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
             CheckDlgButton(hDlg, IDD_SEARCHALL, !SearchInfo.bDontSearchSubs);
             CheckDlgButton(hDlg, IDD_INCLUDEDIRS, SearchInfo.bIncludeSubDirs);
+
+            if (SearchInfo.ftSince.dwHighDateTime != 0 || SearchInfo.ftSince.dwLowDateTime != 0) {
+                FILETIME ftLocal;
+                FileTimeToLocalFileTime(&SearchInfo.ftSince, &ftLocal);
+                SYSTEMTIME st;
+                FileTimeToSystemTime(&ftLocal, &st);
+                DateTime_SetSystemtime(GetDlgItem(hDlg, IDD_DATE), GDT_VALID, &st);
+            } else {
+                DateTime_SetSystemtime(GetDlgItem(hDlg, IDD_DATE), GDT_NONE, NULL);
+            }
             break;
 
         case WM_COMMAND:
@@ -128,21 +139,15 @@ SearchDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                     GetDlgItemText(hDlg, IDD_DIR, SearchInfo.szSearch, COUNTOF(SearchInfo.szSearch));
                     QualifyPath(SearchInfo.szSearch);
 
-                    GetDlgItemText(hDlg, IDD_DATE, szStart, COUNTOF(szStart));
                     SearchInfo.ftSince.dwHighDateTime = SearchInfo.ftSince.dwLowDateTime = 0;
-                    if (lstrlen(szStart) != 0) {
-                        DATE date;
+                    {
                         SYSTEMTIME st;
-                        FILETIME ftLocal;
-                        HRESULT hr = VarDateFromStr(szStart, lcid, 0, &date);
-                        BOOL b1 = VariantTimeToSystemTime(date, &st);
-                        BOOL b2 = SystemTimeToFileTime(&st, &ftLocal);
-
-                        // SearchInfo.ftSince is in UTC (as are FILETIME in files to which this will be compared)
-                        BOOL b3 = LocalFileTimeToFileTime(&ftLocal, &SearchInfo.ftSince);
-                        if (FAILED(hr) || !b1 || !b2 || !b3) {
-                            MessageBeep(0);
-                            break;
+                        LRESULT dateResult = DateTime_GetSystemtime(GetDlgItem(hDlg, IDD_DATE), &st);
+                        if (dateResult == GDT_VALID) {
+                            FILETIME ftLocal;
+                            SystemTimeToFileTime(&st, &ftLocal);
+                            // SearchInfo.ftSince is in UTC (as are FILETIME in files to which this will be compared)
+                            LocalFileTimeToFileTime(&ftLocal, &SearchInfo.ftSince);
                         }
                     }
 
@@ -191,6 +196,31 @@ SearchDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                     ShowWindow(hwndSearch, bMaximized ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL);
                     SetWindowPos(hwndSearch, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
 
+                    break;
+                }
+
+                case IDD_BROWSE: {
+                    IFileOpenDialog* pfd = NULL;
+                    if (SUCCEEDED(
+                            CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd)))) {
+                        DWORD dwOptions;
+                        if (SUCCEEDED(pfd->GetOptions(&dwOptions))) {
+                            pfd->SetOptions(dwOptions | FOS_PICKFOLDERS);
+                        }
+                        pfd->SetTitle(L"Select a folder to search");
+                        if (SUCCEEDED(pfd->Show(hDlg))) {
+                            IShellItem* psi = NULL;
+                            if (SUCCEEDED(pfd->GetResult(&psi))) {
+                                LPWSTR pszPath = NULL;
+                                if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszPath))) {
+                                    SetDlgItemText(hDlg, IDD_DIR, pszPath);
+                                    CoTaskMemFree(pszPath);
+                                }
+                                psi->Release();
+                            }
+                        }
+                        pfd->Release();
+                    }
                     break;
                 }
 
