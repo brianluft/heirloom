@@ -10,9 +10,9 @@
 
 # Editing dialogs
 - Set the font to Segoe UI / Regular / 9pt.
-- (Optional) Set the margins to 7 DLU, it comes up in tiny text when you resize the guidelines.
-- Set grid spacing to 7 DLU and resize the dialog in grid mode to be an exact multiple of the grid spacing. You will have to go back and forth between "None" and "Grid" guide modes. Size controls in "None" mode, then lay out the dialog in "Grid" mode. Don't resize controls in grid mode.
-- Control sizes
+- Set grid spacing to 7 DLU and resize the dialog in grid mode to be an exact multiple of the grid spacing. You will have to go back and forth between guide modes.
+- Size controls in "None" mode, then lay out the dialog in "Grid" mode. Don't resize controls in grid mode.
+- Control sizes (shown in the statusbar when resizing)
     - Button: 50x14 DLU
     - Textbox: 12 DLU tall
     - Checkbox: 10 DLU tall (Size to Content does it correctly)
