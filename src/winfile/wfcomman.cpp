@@ -1626,8 +1626,6 @@ BOOL AppCommandProc(DWORD id) {
 
             BOOL bDir = FALSE;
 
-            // should do the multiple or single file properties
-
             pSel = GetSelection(0, &bDir);
 
             if (!pSel)
@@ -1640,9 +1638,9 @@ BOOL AppCommandProc(DWORD id) {
                 count++;
             }
 
-            LocalFree((HANDLE)pSel);
-
             if (count == 1) {
+                LocalFree((HANDLE)pSel);
+
                 SHELLEXECUTEINFO sei;
 
                 memset(&sei, 0, sizeof(sei));
@@ -1660,8 +1658,60 @@ BOOL AppCommandProc(DWORD id) {
                 }
 
                 ShellExecuteEx(&sei);
-            } else if (count > 1)
-                DialogBox(hAppInstance, (LPWSTR)MAKEINTRESOURCE(MULTIPLEATTRIBSDLG), hwndFrame, AttribsDlgProc);
+            } else if (count > 1) {
+                SetWindowDirectory();
+
+                SendMessage(hwndActive, FS_GETDIRECTORY, COUNTOF(szPath), (LPARAM)szPath);
+                StripBackslash(szPath);
+
+                PIDLIST_ABSOLUTE pidlFolder = ILCreateFromPath(szPath);
+
+                if (pidlFolder) {
+                    PIDLIST_ABSOLUTE* filePidls = (PIDLIST_ABSOLUTE*)LocalAlloc(LPTR, count * sizeof(PIDLIST_ABSOLUTE));
+                    PITEMID_CHILD* childPidls = (PITEMID_CHILD*)LocalAlloc(LPTR, count * sizeof(PITEMID_CHILD));
+
+                    if (filePidls && childPidls) {
+                        int idx = 0;
+                        p = pSel;
+
+                        while (p = GetNextFile(p, szTemp, COUNTOF(szTemp))) {
+                            QualifyPath(szTemp);
+                            PIDLIST_ABSOLUTE pidl = ILCreateFromPath(szTemp);
+
+                            if (pidl) {
+                                filePidls[idx] = pidl;
+                                childPidls[idx] = ILFindLastID(pidl);
+                                idx++;
+                            }
+                        }
+
+                        if (idx > 0) {
+                            IDataObject* pDataObj = NULL;
+                            HRESULT hr = SHCreateDataObject(
+                                pidlFolder, (UINT)idx, (PCUITEMID_CHILD_ARRAY)childPidls, NULL, IID_IDataObject,
+                                (void**)&pDataObj);
+
+                            if (SUCCEEDED(hr) && pDataObj) {
+                                SHMultiFileProperties(pDataObj, 0);
+                                pDataObj->Release();
+                            }
+                        }
+
+                        for (int i = 0; i < idx; i++)
+                            ILFree(filePidls[i]);
+                    }
+
+                    if (filePidls)
+                        LocalFree(filePidls);
+                    if (childPidls)
+                        LocalFree(childPidls);
+                    ILFree(pidlFolder);
+                }
+
+                LocalFree((HANDLE)pSel);
+            } else {
+                LocalFree((HANDLE)pSel);
+            }
             break;
         }
 

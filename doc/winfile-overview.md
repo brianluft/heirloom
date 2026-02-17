@@ -163,7 +163,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **File Management** - Copy, move, delete, rename with confirmation dialogs
 - **Directory Operations** - Create, delete, navigate with tree synchronization
 - **Archive Operations** - ZIP archive creation and extraction with "Add to Zip", "Add To...", "Extract Here", "Extract to New Folder", and "Extract To..." commands
-- **Attribute Handling** - Read-only, hidden, system, compressed, encrypted file support
+- **Properties Dialog** - Uses native File Explorer Properties dialog for both single and multiple file selections via ShellExecuteEx and SHMultiFileProperties
 - **Long Filename Support** - Windows 95+ LFN with legacy 8.3 compatibility
 - **Network File Support** - UNC paths, mapped drives, and remote operations
 
