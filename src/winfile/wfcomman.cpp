@@ -759,20 +759,6 @@ BOOL AppCommandProc(DWORD id) {
         return TRUE;
     }
 
-    // When the location combobox edit has focus, redirect clipboard
-    // commands to the edit control instead of performing file operations.
-    if (id == IDM_COPYTOCLIPBOARD || id == IDM_CUTTOCLIPBOARD || id == IDM_PASTE) {
-        HWND hwndFocus = GetFocus();
-        if (hwndDriveList && (hwndFocus == hwndDriveList || IsChild(hwndDriveList, hwndFocus))) {
-            HWND hwndEdit = (HWND)SendMessage(hwndDriveList, CBEM_GETEDITCONTROL, 0, 0);
-            if (hwndEdit) {
-                UINT msg = (id == IDM_COPYTOCLIPBOARD) ? WM_COPY : (id == IDM_CUTTOCLIPBOARD) ? WM_CUT : WM_PASTE;
-                SendMessage(hwndEdit, msg, 0, 0);
-                return TRUE;
-            }
-        }
-    }
-
     switch (id) {
         case IDM_TREEONLY:
         case IDM_DIRONLY:
