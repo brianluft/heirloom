@@ -48,6 +48,40 @@
 BOOL EnablePropertiesMenu(HWND hwnd, LPWSTR pszSel);
 std::wstring EscapeMenuItemText(const std::wstring& text);
 
+// Returns TRUE when the location combobox edit control has focus and the
+// keystroke is one the edit control should handle natively (Ctrl+C/X/V/A,
+// Delete, Ctrl+Delete).  The caller should skip TranslateAccelerator so the
+// key reaches the edit control instead of triggering a file-operation command.
+BOOL shouldSkipAccelerator(MSG* pMsg) {
+    if (!hwndDriveList)
+        return FALSE;
+
+    if (pMsg->message != WM_KEYDOWN && pMsg->message != WM_SYSKEYDOWN)
+        return FALSE;
+
+    HWND hwndFocus = GetFocus();
+    if (hwndFocus != hwndDriveList && !IsChild(hwndDriveList, hwndFocus))
+        return FALSE;
+
+    BOOL ctrl = GetKeyState(VK_CONTROL) < 0;
+    BOOL alt = GetKeyState(VK_MENU) < 0;
+
+    if (alt)
+        return FALSE;
+
+    WPARAM vk = pMsg->wParam;
+
+    // Ctrl+C, Ctrl+X, Ctrl+V, Ctrl+A
+    if (ctrl && (vk == 'C' || vk == 'X' || vk == 'V' || vk == 'A'))
+        return TRUE;
+
+    // Delete and Ctrl+Delete (no alt)
+    if (vk == VK_DELETE)
+        return TRUE;
+
+    return FALSE;
+}
+
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pszCmdLineA, int nCmdShow) {
     MSG msg;
     LPWSTR pszCmdLine;
@@ -79,7 +113,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pszCmdLineA, in
 
             } else if (
                 !TranslateMDISysAccel(hwndMDIClient, &msg) &&
-                (!hwndFrame || !TranslateAccelerator(hwndFrame, hAccel, &msg))) {
+                (shouldSkipAccelerator(&msg) || !hwndFrame || !TranslateAccelerator(hwndFrame, hAccel, &msg))) {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }

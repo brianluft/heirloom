@@ -428,7 +428,7 @@ void wfYield() {
 
     while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (!TranslateMDISysAccel(hwndMDIClient, &msg) &&
-            (!hwndFrame || !TranslateAccelerator(hwndFrame, hAccel, &msg))) {
+            (shouldSkipAccelerator(&msg) || !hwndFrame || !TranslateAccelerator(hwndFrame, hAccel, &msg))) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
