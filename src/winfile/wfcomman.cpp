@@ -1002,19 +1002,21 @@ BOOL AppCommandProc(DWORD id) {
             break;
 
         case IDM_ADDBOOKMARK: {
-            BOOL bDir;
-            LPWSTR szDir;
+            if (!hwndActive || (int)GetWindowLongPtr(hwndActive, GWL_TYPE) == TYPE_SEARCH) {
+                MessageBox(
+                    hwndFrame, L"Open a folder window first to add a bookmark.", L"Add Bookmark",
+                    MB_OK | MB_ICONINFORMATION);
+                break;
+            }
 
-            // Get the current active directory path similar to IDM_RUN
-            szDir = GetSelection(1 | 4 | 16, &bDir);
-            if (!bDir && szDir)
-                StripFilespec(szDir);
+            // Get the current directory from the active MDI child window
+            WCHAR szDir[MAXPATHLEN];
+            GetMDIWindowText(hwndActive, szDir, COUNTOF(szDir));
+            StripFilespec(szDir);
 
             // Create and show the Add Bookmark dialog
             EditBookmarkDialog dlg(szDir, szDir, true);
             dlg.showDialog(hwndFrame);
-
-            LocalFree(szDir);
         } break;
 
         case IDM_MANAGEBOOKMARKS: {
