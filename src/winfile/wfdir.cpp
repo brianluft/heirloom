@@ -24,6 +24,7 @@
 #include "wfdirrd.h"
 #include "wfdirsrc.h"
 #include "wftree.h"
+#include "wfdrives.h"
 #include "stringconstants.h"
 #include <commctrl.h>
 
@@ -649,7 +650,7 @@ DirWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 } else {
                     hwndNext = HasTreeWindow(hwndParent);
                     if (!hwndNext && bDriveBar) {
-                        hwndNext = hwndDriveBar;
+                        hwndNext = GetChildToolbar(hwndParent);
                     }
                     SetFocus(hwndNext);
                 }
@@ -853,10 +854,11 @@ DirWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 case VK_F6:  // like excel
                 case VK_TAB: {
                     HWND hwndTree, hwndDrives;
+                    HWND hwndParentToolbar = GetChildToolbar(hwndParent);
 
                     hwndTree = HasTreeWindow(hwndParent);
 
-                    hwndDrives = bDriveBar ? hwndDriveBar : (hwndTree ? hwndTree : hwnd);
+                    hwndDrives = (bDriveBar && hwndParentToolbar) ? hwndParentToolbar : (hwndTree ? hwndTree : hwnd);
 
                     if (GetKeyState(VK_SHIFT) < 0)
                         SetFocus(hwndTree ? hwndTree : hwndDrives);
@@ -883,8 +885,11 @@ DirWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                 default:
                     // Select disc by pressing CTRL + ALT + letter
-                    if ((GetKeyState(VK_CONTROL) < 0) && (GetKeyState(VK_MENU) < 0) && hwndDriveBar)
-                        return SendMessage(hwndDriveBar, uMsg, wParam, lParam);
+                    if ((GetKeyState(VK_CONTROL) < 0) && (GetKeyState(VK_MENU) < 0)) {
+                        HWND hwndParentToolbar = GetChildToolbar(hwndParent);
+                        if (hwndParentToolbar)
+                            return SendMessage(hwndParentToolbar, uMsg, wParam, lParam);
+                    }
                     break;
             }
             return -1;
@@ -3061,7 +3066,7 @@ BOOL SetDirFocus(HWND hwndDir) {
             return TRUE;
 
         if ((hwndFocus = GetTreeFocus(hwndParent)) == hwndDir)
-            SetFocus(hwndTree ? hwndTree : hwndDriveBar);
+            SetFocus(hwndTree ? hwndTree : GetChildToolbar(hwndParent));
         else
             SetFocus(hwndFocus);
 

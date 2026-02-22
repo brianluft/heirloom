@@ -19,6 +19,7 @@
 #include "wftree.h"
 #include "wfinit.h"
 #include "wfdrives.h"
+#include "wfdpi.h"
 #include "stringconstants.h"
 #include "wfminbar.h"
 #include "libheirloom/MdiChildNcPaint.h"
@@ -55,8 +56,9 @@ void GetTreeWindows(HWND hwnd, PHWND phwndTree, PHWND phwndDir) {
 HWND GetTreeFocus(HWND hwndTree) {
     HWND hwnd, hwndLast = NULL;
 
-    if (bDriveBar && GetFocus() == hwndDriveBar)
-        return hwndDriveBar;
+    HWND hwndToolbar = GetChildToolbar(hwndTree);
+    if (bDriveBar && hwndToolbar && GetFocus() == hwndToolbar)
+        return hwndToolbar;
 
     hwndLast = hwnd = (HWND)GetWindowLongPtr(hwndTree, GWL_LASTFOCUS);
 
@@ -208,8 +210,11 @@ BOOL ResizeSplit(HWND hwnd, int dxSplit) {
                 if (hwndLB) {
                     PVOID pv;
                     SendMessage(hwndLB, LB_GETTEXT, 0, (LPARAM)(LPWSTR)&pv);
-                    if (!pv)
-                        SetFocus(hwndDriveBar);
+                    if (!pv) {
+                        HWND hwndToolbar = GetChildToolbar(hwnd);
+                        if (hwndToolbar)
+                            SetFocus(hwndToolbar);
+                    }
                 }
             }
             DestroyWindow(hwndTree);
@@ -262,16 +267,17 @@ void SwitchDriveSelection(HWND hwndChild) {
 
     for (i = 0; i < cDrives; i++) {
         if (rgiDrive[i] == drive) {
-            SetWindowLongPtr(hwndDriveBar, GWL_CURDRIVEIND, i);
-            SetWindowLongPtr(hwndDriveBar, GWL_CURDRIVEFOCUS, i);
-
+            HWND hwndToolbar = GetChildToolbar(hwndChild);
+            if (hwndToolbar) {
+                SetWindowLongPtr(hwndToolbar, GWL_CURDRIVEIND, i);
+                SetWindowLongPtr(hwndToolbar, GWL_CURDRIVEFOCUS, i);
+            }
             break;
         }
     }
 
     if (i == cDrives)
-        return;  // didn't find drive;  it must have been invalidated
-                 // other code (such as tree walk) will handle
+        return;
 
     if (bDriveBar) {
         UpdateToolbarState(hwndChild);
@@ -316,7 +322,11 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 bMDIFrameSysMenu = FALSE;
             }
 
-            MenuHelp((WORD)uMsg, wParam, lParam, GetMenu(hwndFrame), hAppInstance, hwndStatus, dwMenuIDs);
+            {
+                HWND hwndChildStatus = GetChildStatusBar(hwnd);
+                if (hwndChildStatus)
+                    MenuHelp((WORD)uMsg, wParam, lParam, GetMenu(hwndFrame), hAppInstance, hwndChildStatus, dwMenuIDs);
+            }
             break;
 
         case WM_XBUTTONDOWN:
@@ -466,6 +476,33 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             SetWindowLongPtr(hwnd, GWL_VOLNAME, 0L);
             SetWindowLongPtr(hwnd, GWL_PATHLEN, 0L);
 
+            // Create per-child toolbar
+            {
+                HWND hwndChildToolbar = CreateWindow(
+                    kDrivesClass, NULL,
+                    bDriveBar ? WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS
+                              : WS_CHILD | WS_BORDER | WS_CLIPSIBLINGS,
+                    0, 0, 0, 0, hwnd, 0, hAppInstance, NULL);
+
+                if (!hwndChildToolbar)
+                    return -1;
+
+                SetWindowLongPtr(hwnd, GWL_HWND_TOOLBAR, (LONG_PTR)hwndChildToolbar);
+            }
+
+            // Create per-child status bar
+            {
+                HWND hwndChildStatus = CreateStatusWindow(
+                    bStatusBar ? WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS
+                               : WS_CHILD | WS_BORDER | WS_CLIPSIBLINGS,
+                    kEmptyString, hwnd, IDC_STATUS);
+
+                if (hwndChildStatus) {
+                    SetWindowLongPtr(hwnd, GWL_HWND_STATUS, (LONG_PTR)hwndChildStatus);
+                    ConfigureStatusBarParts(hwndChildStatus);
+                }
+            }
+
             if (!ResizeSplit(hwnd, dxSplit))
                 return -1;
 
@@ -529,6 +566,19 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             if (lpszDirPath)
                 LocalFree(lpszDirPath);
 
+            //
+            // Destroy per-child toolbar and status bar
+            //
+            {
+                HWND hwndChildToolbar = GetChildToolbar(hwnd);
+                if (hwndChildToolbar)
+                    DestroyWindow(hwndChildToolbar);
+
+                HWND hwndChildStatus = GetChildStatusBar(hwnd);
+                if (hwndChildStatus)
+                    DestroyWindow(hwndChildStatus);
+            }
+
             break;
         }
         case WM_MDIACTIVATE:
@@ -550,8 +600,7 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                 SetFocus(hwndFocus);
 
                 SwitchDriveSelection(hwnd);
-            } else if (hwndDriveBar)
-                SendMessage(hwndDriveBar, uMsg, wParam, lParam);
+            }
             break;
 
         case WM_SETFOCUS:
@@ -590,14 +639,23 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             if (IsIconic(hwnd))
                 break;
 
-            y = 0;
-
             x = LOWORD(lParam);
 
             GetClientRect(hwnd, &rc);
 
+            // Start split bar below the toolbar (if visible)
+            {
+                HWND hwndChildToolbar = GetChildToolbar(hwnd);
+                if (hwndChildToolbar && bDriveBar) {
+                    UINT dpi = GetDpiForWindow(hwnd);
+                    y = ScaleValueForDpi(30, dpi) + 2 * dyBorder - dyBorder;
+                } else {
+                    y = 0;
+                }
+            }
+
             dx = 4;
-            dy = rc.bottom - y;  // the height of the client less the drives window
+            dy = rc.bottom - y;
 
             hdc = GetDC(hwnd);
 
@@ -775,20 +833,44 @@ TreeWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 void ResizeWindows(HWND hwndParent, int dxWindow, int dyWindow) {
     int y, dy, split;
+    int dyToolbar = 0;
+    int dyStatusBar = 0;
 
     HWND hwndTree, hwndDir;
     RECT rc;
 
     GetTreeWindows(hwndParent, &hwndTree, &hwndDir);
 
-    y = -dyBorder;
+    // Position the per-child toolbar at the top
+    HWND hwndChildToolbar = GetChildToolbar(hwndParent);
+    if (hwndChildToolbar && bDriveBar) {
+        UINT dpi = GetDpiForWindow(hwndParent);
+        dyToolbar = ScaleValueForDpi(30, dpi) + 2 * dyBorder;
+
+        MoveWindow(hwndChildToolbar, -dyBorder, -dyBorder, dxWindow + 2 * dyBorder, dyToolbar, TRUE);
+        InvalidateRect(hwndChildToolbar, NULL, FALSE);
+    }
+
+    // Position the per-child status bar at the bottom
+    HWND hwndChildStatus = GetChildStatusBar(hwndParent);
+    if (hwndChildStatus && bStatusBar) {
+        SendMessage(hwndChildStatus, WM_SIZE, 0, 0L);
+        RECT rcStatus;
+        GetWindowRect(hwndChildStatus, &rcStatus);
+        dyStatusBar = rcStatus.bottom - rcStatus.top;
+    }
+
+    y = (bDriveBar && hwndChildToolbar) ? dyToolbar - dyBorder : -dyBorder;
 
     split = GetSplit(hwndParent);
+
+    UINT dpiParent = GetDpiForWindow(hwndParent);
+    int dyStatusGap = (hwndChildStatus && bStatusBar) ? ScaleValueForDpi(1, dpiParent) : 0;
 
     //
     // user has been fixed to do this right
     //
-    dy = dyWindow - y + dyBorder;
+    dy = dyWindow - y + dyBorder - dyStatusBar - dyStatusGap;
 
     if (hwndTree) {
         if (!hwndDir)

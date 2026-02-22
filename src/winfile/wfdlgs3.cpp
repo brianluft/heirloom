@@ -15,6 +15,7 @@
 #include "resize.h"
 #include "wfutil.h"
 #include "wftree.h"
+#include "wfdrives.h"
 #include "wfsearch.h"
 #include "stringconstants.h"
 #include <shlobj.h>
@@ -259,7 +260,12 @@ void UpdateConnections(BOOL bUpdateDriveList) {
 
                 for (i = 0; i < cDrives; i++) {
                     if (!IsRemovableDrive(rgiDrive[i]) && !IsCDRomDrive(rgiDrive[i])) {
-                        SendMessage(hwndDriveBar, FS_SETDRIVE, i, 0L);
+                        {
+                            HWND hwndActiveChild = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+                            HWND hwndActiveToolbar = GetChildToolbar(hwndActiveChild);
+                            if (hwndActiveToolbar)
+                                SendMessage(hwndActiveToolbar, FS_SETDRIVE, i, 0L);
+                        }
                         break;
                     }
                 }

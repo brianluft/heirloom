@@ -852,7 +852,7 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     wndClass.lpfnWndProc = TreeWndProc;
     // wndClass.cbClsExtra     = 0;
 
-    wndClass.cbWndExtra = GWL_DIRPATH + sizeof(LONG_PTR);
+    wndClass.cbWndExtra = GWL_HWND_STATUS + sizeof(LONG_PTR);
 
     // wndClass.hInstance      = hInstance;
     wndClass.hIcon = NULL;
@@ -1065,12 +1065,6 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     }
 
     //
-    // Turn off redraw for hwndDriveList since we will display it later
-    // (avoid flicker)
-    //
-    SendMessage(hwndDriveList, WM_SETREDRAW, 0, 0l);
-
-    //
     // support forced min or max
     //
     if (nCmdShow == SW_SHOW || nCmdShow == SW_SHOWNORMAL && win.sw != SW_SHOWMINIMIZED) {
@@ -1078,13 +1072,6 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     }
 
     ShowWindow(hwndFrame, nCmdShow);
-
-    if (bDriveBar) {
-        //
-        // Update the drive bar
-        //
-        InvalidateRect(hwndDriveBar, NULL, TRUE);
-    }
     UpdateWindow(hwndFrame);
 
     //
@@ -1113,10 +1100,9 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     }
 
     //
-    // Now draw drive list box
+    // Refresh drive lists in all toolbar instances
     //
-    SendMessage(hwndDriveList, WM_SETREDRAW, (WPARAM)TRUE, 0l);
-    InvalidateRect(hwndDriveList, NULL, TRUE);
+    RefreshToolbarDriveList();
 
     //
     // Init Menus fast stuff

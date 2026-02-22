@@ -12,6 +12,7 @@
 #include "wfutil.h"
 #include "wfdir.h"
 #include "wftree.h"
+#include "wfdrives.h"
 #include "wfinit.h"
 
 //----------------------------
@@ -302,7 +303,7 @@ ExtensionMsgProc(UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 return FMFOCUS_TREE;
             else if (hwndFocus == hwndDir)
                 return FMFOCUS_DIR;
-            else if (hwndFocus == hwndDriveBar)
+            else if (hwndFocus == GetChildToolbar(hwndActive))
                 return FMFOCUS_DRIVES;
             break;
 
