@@ -23,6 +23,7 @@
 #include "wfdirrd.h"
 #include "wfinit.h"
 #include "wfdrives.h"
+#include "wflocicon.h"
 #include "wfsearch.h"
 #include "wftree.h"
 #include "treectl.h"
@@ -877,6 +878,18 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     wndClass.hCursor = hcurArrow;
     wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
     // wndClass.lpszMenuName   = NULL;
+
+    if (!RegisterClass(&wndClass)) {
+        return FALSE;
+    }
+
+    wndClass.lpszClassName = kLocationIconClass;
+    wndClass.style = CS_HREDRAW | CS_VREDRAW;
+    wndClass.lpfnWndProc = LocationIconWndProc;
+    wndClass.cbWndExtra = 2 * sizeof(LONG_PTR);
+    wndClass.hIcon = NULL;
+    wndClass.hCursor = NULL;
+    wndClass.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
 
     if (!RegisterClass(&wndClass)) {
         return FALSE;

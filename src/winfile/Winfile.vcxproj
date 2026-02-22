@@ -234,6 +234,7 @@
     <ClInclude Include="wfexti.h" />
     <ClInclude Include="wfinfo.h" />
     <ClInclude Include="wfinit.h" />
+    <ClInclude Include="wflocicon.h" />
     <ClInclude Include="wfmem.h" />
     <ClInclude Include="wfpng.h" />
     <ClInclude Include="wfrecyclebin.h" />
@@ -289,6 +290,7 @@
     <ClCompile Include="wffile.cpp" />
     <ClCompile Include="wfinfo.cpp" />
     <ClCompile Include="wfinit.cpp" />
+    <ClCompile Include="wflocicon.cpp" />
     <ClCompile Include="wfmem.cpp" />
     <ClCompile Include="wfminbar.cpp" />
     <ClCompile Include="wfsearch.cpp" />

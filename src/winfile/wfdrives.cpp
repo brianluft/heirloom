@@ -9,6 +9,7 @@
 #include "wfdir.h"
 #include "wftree.h"
 #include "wfdrives.h"
+#include "wflocicon.h"
 #include "wfdpi.h"
 #include "stringconstants.h"
 #include <commctrl.h>
@@ -32,7 +33,7 @@
 // Internal toolbar child windows
 static HWND hwndToolbarCtrl = NULL;
 static HWND hwndLocationCombo = NULL;
-static HIMAGELIST himlDriveIcons = NULL;
+static HWND hwndLocationIcon = NULL;
 
 // Button definitions for the toolbar
 static const struct {
@@ -56,7 +57,6 @@ static const struct {
 #define NUM_TOOLBAR_BUTTONS (sizeof(toolbarButtons) / sizeof(toolbarButtons[0]))
 
 static void PopulateLocationCombo();
-static void CreateDriveImageList(UINT dpi);
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -369,22 +369,6 @@ static HIMAGELIST CreatePngImageList(UINT dpi, PNG_TYPE type, int count, UINT ic
     return himl;
 }
 
-//
-// Build the drive icon image list for the location combo box.
-//
-static void CreateDriveImageList(UINT dpi) {
-    UINT iconCX, iconCY;
-    PngGetScaledSize(dpi, PNG_TYPE_DRIVE, 0, &iconCX, &iconCY);
-    if (iconCX == 0)
-        iconCX = iconCY = 16;
-
-    if (himlDriveIcons) {
-        ImageList_Destroy(himlDriveIcons);
-    }
-
-    himlDriveIcons = CreatePngImageList(dpi, PNG_TYPE_DRIVE, 6, iconCX, iconCY);
-}
-
 static void PopulateLocationCombo() {
     if (!hwndLocationCombo)
         return;
@@ -392,7 +376,7 @@ static void PopulateLocationCombo() {
     SendMessage(hwndLocationCombo, CB_RESETCONTENT, 0, 0);
 
     COMBOBOXEXITEMW cbei = {};
-    cbei.mask = CBEIF_TEXT | CBEIF_IMAGE | CBEIF_SELECTEDIMAGE;
+    cbei.mask = CBEIF_TEXT;
 
     WCHAR szDrive[4];
 
@@ -404,8 +388,6 @@ static void PopulateLocationCombo() {
 
         cbei.iItem = i;
         cbei.pszText = szDrive;
-        cbei.iImage = aDriveInfo[drive].iOffset;
-        cbei.iSelectedImage = aDriveInfo[drive].iOffset;
 
         SendMessage(hwndLocationCombo, CBEM_INSERTITEM, 0, (LPARAM)&cbei);
     }
@@ -549,13 +531,22 @@ void UpdateToolbarState(HWND hwndActive) {
             SendMessage(hwndToolbarCtrl, TB_ENABLEBUTTON, toolbarButtons[i].idm, MAKELONG(bEnable, 0));
         }
     }
+
+    // Update the location icon to reflect the current directory
+    if (hwndLocationIcon) {
+        if (hwndActive && hwndActive != hwndSearch) {
+            WCHAR szIconPath[MAXPATHLEN];
+            SendMessage(hwndActive, FS_GETDIRECTORY, MAXPATHLEN, (LPARAM)szIconPath);
+            StripBackslash(szIconPath);
+            UpdateLocationIcon(hwndLocationIcon, szIconPath);
+        } else {
+            UpdateLocationIcon(hwndLocationIcon, L"");
+        }
+    }
 }
 
 void RefreshToolbarDriveList() {
     if (hwndLocationCombo) {
-        UINT dpi = GetDpiForWindow(hwndDriveBar);
-        CreateDriveImageList(dpi);
-        SendMessage(hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)himlDriveIcons);
         PopulateLocationCombo();
     }
 }
@@ -609,9 +600,10 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             if (iconCX == 0)
                 iconCX = iconCY = ScaleValueForDpi(16, dpi);
 
-            // Create the location combo box (ComboBoxEx for icon support)
-            CreateDriveImageList(dpi);
+            // Create the location icon (drag-and-drop source/target)
+            hwndLocationIcon = CreateLocationIcon(hWnd, hAppInstance);
 
+            // Create the location combo box
             hwndLocationCombo = CreateWindowExW(
                 0, WC_COMBOBOXEXW, NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL,
                 m.leftMargin, 0, 100, m.comboDropdownHeight, hWnd, (HMENU)(INT_PTR)IDC_LOCATION_COMBO, hAppInstance,
@@ -619,7 +611,6 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
             if (hwndLocationCombo) {
                 hwndDriveList = hwndLocationCombo;  // keep global in sync for compatibility
-                SendMessage(hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)himlDriveIcons);
                 PopulateLocationCombo();
             }
 
@@ -661,8 +652,6 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 SendMessage(hwndToolbarCtrl, TB_ADDBUTTONS, NUM_TOOLBAR_BUTTONS, (LPARAM)tbb);
                 SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
 
-                SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
-
                 SetWindowSubclass(hwndToolbarCtrl, ToolbarSubclassProc, 0, 0);
             }
 
@@ -687,16 +676,32 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 SetWindowPos(hwndToolbarCtrl, NULL, toolbarX, toolbarY, toolbarWidth, toolbarHeight, SWP_NOZORDER);
             }
 
-            // Stretch combobox to fill remaining space
+            // Position the location icon
+            int iconW = 0;
+            if (hwndLocationIcon) {
+                UINT dpi = GetDpiForWindow(hWnd);
+                UINT iCX, iCY;
+                PngGetScaledSize(dpi, PNG_TYPE_DRIVE, 0, &iCX, &iCY);
+                if (iCX == 0)
+                    iCX = iCY = ScaleValueForDpi(16, dpi);
+                iconW = (int)iCX + m.padding * 2;
+                int iconH = (int)iCY + m.padding * 2;
+                int iconX = m.leftMargin;
+                int iconY = max(0, (cy - iconH) / 2);
+                SetWindowPos(hwndLocationIcon, NULL, iconX, iconY, iconW, iconH, SWP_NOZORDER);
+            }
+
+            // Stretch combobox to fill remaining space (after icon)
             if (hwndLocationCombo) {
+                int comboLeft = m.leftMargin + iconW;
                 int comboRight = cx - toolbarWidth - m.spacing;
-                int comboWidth = max(60, comboRight - m.leftMargin);
+                int comboWidth = max(60, comboRight - comboLeft);
                 RECT rcCombo;
                 GetWindowRect(hwndLocationCombo, &rcCombo);
                 int comboH = rcCombo.bottom - rcCombo.top;
                 int comboY = max(0, (cy - comboH) / 2);
                 SetWindowPos(
-                    hwndLocationCombo, NULL, m.leftMargin, comboY, comboWidth, m.comboDropdownHeight, SWP_NOZORDER);
+                    hwndLocationCombo, NULL, comboLeft, comboY, comboWidth, m.comboDropdownHeight, SWP_NOZORDER);
             }
             break;
         }
@@ -767,10 +772,6 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         case WM_DESTROY:
-            if (himlDriveIcons) {
-                ImageList_Destroy(himlDriveIcons);
-                himlDriveIcons = NULL;
-            }
             // The toolbar image list is owned by the toolbar and destroyed with it,
             // but we need to be careful. Get it before the toolbar is destroyed.
             if (hwndToolbarCtrl) {
@@ -780,6 +781,7 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             }
             hwndToolbarCtrl = NULL;
             hwndLocationCombo = NULL;
+            hwndLocationIcon = NULL;
             hwndDriveList = NULL;
             break;
 

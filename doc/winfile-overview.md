@@ -17,6 +17,7 @@ Unlike progman's clean separation of UI and business logic, winfile uses a tradi
 ```
 Frame Window (FrameWndProc) - hwndFrame
 ├── Toolbar (DrivesWndProc) - hwndDriveBar
+│   ├── Location Icon (LocationIconWndProc) - hwndLocationIcon (drag-and-drop source/target)
 │   ├── Location ComboBoxEx (WC_COMBOBOXEX) - hwndDriveList
 │   └── Toolbar Control (TOOLBARCLASSNAME) - view/sort/new window buttons
 ├── MDI Client - hwndMDIClient
@@ -95,14 +96,15 @@ Frame Window (FrameWndProc) - hwndFrame
 
 #### Drive Management and Toolbar (`wfdrives.cpp`)
 - **Toolbar** - Standard Win32 toolbar replacing the old drive bar, containing:
-  - **Location Combobox** (COMBOBOXEX) - Drive letter dropdown with drive type icons; edit field accepts arbitrary paths with Enter to navigate
+  - **Location Icon** (`wflocicon.cpp`) - Draggable icon to the left of the combobox showing the current location (drive icon for root paths, open folder for non-root). Supports OLE drag-and-drop in both directions: drag from the icon to export the current directory path, drop onto the icon to copy/move files into the current directory. Shows a hand cursor on hover and has a tooltip. Uses its own `LocationIconDropTarget` (IDropTarget implementation) for drop handling.
+  - **Location Combobox** (COMBOBOXEX) - Drive letter dropdown; edit field accepts arbitrary paths with Enter to navigate
   - **View Radio Group** - List/Details toggle buttons (TBSTYLE_CHECKGROUP) synced with active MDI child's view mode
   - **Sort Radio Group** - Name/Type/Size/Date Newest/Date Oldest toggle buttons synced with active MDI child's sort mode
   - **New Window Button** - Opens a new MDI child window
 - **Drive Detection** - Dynamic drive enumeration and type identification
 - **Network Drive Support** - UNC path handling and connection management
 - **Removable Media** - Floppy disk and CD-ROM handling with validation
-- **Toolbar State Sync** - `UpdateToolbarState()` syncs button/combobox state with the active MDI child; `RefreshToolbarDriveList()` rebuilds the drive combobox when drives change
+- **Toolbar State Sync** - `UpdateToolbarState()` syncs button/combobox/icon state with the active MDI child; `RefreshToolbarDriveList()` rebuilds the drive combobox when drives change
 
 #### Hardware Integration (`wfutil.cpp`)
 - **Path Utilities** - Comprehensive path manipulation and validation
@@ -124,11 +126,12 @@ Frame Window (FrameWndProc) - hwndFrame
   - **Path Handling** - Proper path construction prevents double backslashes in archive file paths
   - **Context Menu Integration** - Both File menu and context menu properly enable/disable ZIP archive commands based on current selection, with correct timing to reflect the actual right-clicked item
 
-#### Drag and Drop (`wfdrop.cpp`, `wfdragsrc.cpp`)
+#### Drag and Drop (`wfdrop.cpp`, `wfdragsrc.cpp`, `wflocicon.cpp`)
 - **OLE Drag/Drop** - COM-based drag and drop implementation
 - **Visual Feedback** - Drag cursors and drop target highlighting
 - **Data Transfer** - File path and data object marshaling
 - **Cross-Application** - Integration with Windows shell and other applications
+- **Location Icon** - Separate drag source and drop target for the toolbar location icon (`LocationIconDropTarget` in `wflocicon.cpp`)
 
 #### Archive Progress Dialog (`archiveprogress.cpp`)
 - **Progress Tracking** - Thread-safe progress dialog for zip/unzip operations
@@ -237,6 +240,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Tree Management**: `wftree.cpp`, `treectl.cpp` - Hierarchical tree navigation
 - **Search Functionality**: `wfsearch.cpp` - File search implementation
 - **Drive Management**: `wfdrives.cpp` - Drive enumeration and selection
+- **Location Icon**: `wflocicon.cpp` - Drag-and-drop location icon in toolbar
 
 ### Utility and Support
 - **String Utilities**: `wfutil.cpp` - Path manipulation and string operations
