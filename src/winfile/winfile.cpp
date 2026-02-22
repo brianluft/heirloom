@@ -315,16 +315,13 @@ BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) 
         EnableMenuItem(hMenu, IDM_TREEONLY, uMenuFlags);
         EnableMenuItem(hMenu, IDM_DIRONLY, uMenuFlags);
 
-        dwView &= VIEW_EVERYTHING;
-
+        // GWL_VIEW stores VIEW_NAMEONLY or VIEW_DETAIL
         CheckMenuItem(
             hMenu, IDM_VNAME, (dwView == VIEW_NAMEONLY) ? MF_CHECKED | MF_BYCOMMAND : MF_UNCHECKED | MF_BYCOMMAND);
         CheckMenuItem(
-            hMenu, IDM_VDETAILS, (dwView == VIEW_EVERYTHING) ? MF_CHECKED | MF_BYCOMMAND : MF_UNCHECKED | MF_BYCOMMAND);
-        CheckMenuItem(
-            hMenu, IDM_VOTHER,
-            (dwView != VIEW_NAMEONLY && dwView != VIEW_EVERYTHING) ? MF_CHECKED | MF_BYCOMMAND
-                                                                   : MF_UNCHECKED | MF_BYCOMMAND);
+            hMenu, IDM_VDETAILS, (dwView != VIEW_NAMEONLY) ? MF_CHECKED | MF_BYCOMMAND : MF_UNCHECKED | MF_BYCOMMAND);
+        // Select Columns is a command, never checked
+        CheckMenuItem(hMenu, IDM_VOTHER, MF_UNCHECKED | MF_BYCOMMAND);
 
         CheckMenuItem(
             hMenu, IDM_BYNAME, (dwSort == IDD_NAME) ? MF_CHECKED | MF_BYCOMMAND : MF_UNCHECKED | MF_BYCOMMAND);
@@ -687,12 +684,11 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
                 for (hwnd = GetWindow(hwndMDIClient, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
                     if (!GetWindow(hwnd, GW_OWNER)) {
-                        dwFlags = GetWindowLongPtr(hwnd, GWL_VIEW) & VIEW_EVERYTHING;
+                        dwFlags = GetEffectiveView((DWORD)GetWindowLongPtr(hwnd, GWL_VIEW));
 
                         if (hwndT = HasDirWindow(hwnd)) {
-                            SendMessage(hwndT, FS_CHANGEDISPLAY, CD_VIEW, MAKELONG(dwFlags, TRUE));
+                            SendMessage(hwndT, FS_CHANGEDISPLAY, CD_VIEW, MAKELONG(LOWORD(dwFlags), TRUE));
                         } else if (hwnd == hwndSearch) {
-                            SetWindowLongPtr(hwnd, GWL_VIEW, dwFlags);
                             SendMessage(hwndSearch, FS_CHANGEDISPLAY, CD_VIEW, 0L);
                         }
                     }

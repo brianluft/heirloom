@@ -18,6 +18,7 @@
 #include "wfutil.h"
 #include "wfdir.h"
 #include "stringconstants.h"
+#include "wfcomman.h"
 
 void MDIClientSizeChange(HWND hwndActive, int iFlags);
 
@@ -55,6 +56,11 @@ void SaveWindows(HWND hwndMain) {
     WritePrivateProfileString(kSettings, kWindow, buf2, szTheINIFile);
 
     WritePrivateProfileBool(kScrollOnExpand, bScrollOnExpand);
+
+    // Save global column selection
+    WCHAR szColBuf[16];
+    wsprintf(szColBuf, L"%lu", dwViewColumns);
+    WritePrivateProfileString(kSettings, kViewColumns, szColBuf, szTheINIFile);
 
     // write out dir window strings in reverse order
     // so that when we read them back in we get the same Z order
@@ -129,21 +135,18 @@ INT_PTR
 CALLBACK
 OtherDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
     DWORD dwView;
-    HWND hwndActive;
 
     UNREFERENCED_PARAMETER(lParam);
-
-    hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
 
     switch (wMsg) {
         case WM_INITDIALOG:
 
-            dwView = (DWORD)GetWindowLongPtr(hwndActive, GWL_VIEW);
+            // Initialize checkboxes from the global column selection
+            dwView = dwViewColumns;
             CheckDlgButton(hDlg, IDD_SIZE, dwView & VIEW_SIZE);
             CheckDlgButton(hDlg, IDD_DATE, dwView & VIEW_DATE);
             CheckDlgButton(hDlg, IDD_TIME, dwView & VIEW_TIME);
             CheckDlgButton(hDlg, IDD_FLAGS, dwView & VIEW_FLAGS);
-
             CheckDlgButton(hDlg, IDD_DOSNAMES, dwView & VIEW_DOSNAMES);
 
             break;
@@ -158,9 +161,7 @@ OtherDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                     break;
 
                 case IDOK: {
-                    HWND hwnd;
-
-                    dwView = 0;  // VIEW_PLUSES is no longer supported
+                    dwView = 0;
 
                     if (IsDlgButtonChecked(hDlg, IDD_SIZE))
                         dwView |= VIEW_SIZE;
@@ -170,19 +171,37 @@ OtherDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                         dwView |= VIEW_TIME;
                     if (IsDlgButtonChecked(hDlg, IDD_FLAGS))
                         dwView |= VIEW_FLAGS;
-
                     if (IsDlgButtonChecked(hDlg, IDD_DOSNAMES))
                         dwView |= VIEW_DOSNAMES;
 
+                    // If all columns unchecked, use default
+                    if (dwView == 0)
+                        dwView = VIEW_COLUMNS_DEFAULT;
+
                     EndDialog(hDlg, TRUE);
 
-                    if (hwnd = HasDirWindow(hwndActive))
-                        SendMessage(hwnd, FS_CHANGEDISPLAY, CD_VIEW, dwView);
-                    else if (hwndActive == hwndSearch) {
-                        SetWindowLongPtr(hwndActive, GWL_VIEW, dwView);
+                    // Update the global column selection
+                    dwViewColumns = dwView;
 
-                        SendMessage(hwndActive, FS_CHANGEDISPLAY, CD_VIEW, 0L);
+                    // Persist immediately
+                    WCHAR szColumns[16];
+                    wsprintf(szColumns, L"%lu", dwViewColumns);
+                    WritePrivateProfileString(kSettings, kViewColumns, szColumns, szTheINIFile);
+
+                    // If active window is in List mode, switch it to Details mode
+                    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+                    if (hwndActive && GetWindowLongPtr(hwndActive, GWL_VIEW) == VIEW_NAMEONLY) {
+                        HWND hwndDir = HasDirWindow(hwndActive);
+                        if (hwndDir) {
+                            SendMessage(hwndDir, FS_CHANGEDISPLAY, CD_VIEW, MAKELONG(LOWORD(dwViewColumns), 0));
+                        } else if (hwndActive == hwndSearch) {
+                            SetWindowLongPtr(hwndActive, GWL_VIEW, VIEW_DETAIL);
+                            SendMessage(hwndActive, FS_CHANGEDISPLAY, CD_VIEW, 0L);
+                        }
                     }
+
+                    // Broadcast column change to all open Details-mode windows
+                    ApplyColumnsToAllWindows();
 
                     break;
                 }
@@ -374,7 +393,7 @@ void NewFont() {
             if (hwndT = HasDirWindow(hwnd)) {
                 hwndT2 = GetDlgItem(hwndT, IDCW_LISTBOX);
                 SetLBFont(
-                    hwndT, hwndT2, hFont, (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW),
+                    hwndT, hwndT2, hFont, GetEffectiveView((DWORD)GetWindowLongPtr(hwnd, GWL_VIEW)),
                     (LPXDTALINK)GetWindowLongPtr(hwndT, GWL_HDTA));
 
                 InvalidateRect(hwndT2, NULL, TRUE);
@@ -449,7 +468,7 @@ static void ApplyFont(LOGFONT* plf, HFONT hOldFont) {
             if (hwndT = HasDirWindow(hwnd)) {
                 HWND hwndT2 = GetDlgItem(hwndT, IDCW_LISTBOX);
                 SetLBFont(
-                    hwndT, hwndT2, hFont, (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW),
+                    hwndT, hwndT2, hFont, GetEffectiveView((DWORD)GetWindowLongPtr(hwnd, GWL_VIEW)),
                     (LPXDTALINK)GetWindowLongPtr(hwndT, GWL_HDTA));
                 InvalidateRect(hwndT2, NULL, TRUE);
             }

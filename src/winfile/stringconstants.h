@@ -53,5 +53,6 @@ constexpr WCHAR kEmptyString[] = L"";
 constexpr WCHAR kSpace[] = L" ";
 constexpr WCHAR kEllipses[] = L"...";
 constexpr WCHAR kNetwork[] = L"Network";
+constexpr WCHAR kViewColumns[] = L"ViewColumns";
 
 constexpr WCHAR kListbox[] = L"ListBox";  // window style

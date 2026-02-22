@@ -886,7 +886,9 @@ Done:
         lpStart = NULL;
     }
 
-    SetLBFont(hwndDir, GetDlgItem(hwndDir, IDCW_LISTBOX), hFont, (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW), lpStart);
+    SetLBFont(
+        hwndDir, GetDlgItem(hwndDir, IDCW_LISTBOX), hFont, GetEffectiveView((DWORD)GetWindowLongPtr(hwnd, GWL_VIEW)),
+        lpStart);
 
     R_Space(drive);
     U_Space(drive);

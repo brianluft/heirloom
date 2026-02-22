@@ -38,8 +38,6 @@
 #define HELP_PARTIALKEY 0x0105L  // call the search engine in winhelp
 #endif
 
-#define VIEW_NOCHANGE 0x0020  // previously VIEW_PLUSES
-
 void MDIClientSizeChange(HWND hwndActive, int iFlags);
 HWND LocateDirWindow(LPWSTR pszPath, BOOL bNoFileSpec, BOOL bNoTreeWindow);
 void UpdateAllDirWindows(LPWSTR pszPath, DWORD dwFunction, BOOL bNoFileSpec);
@@ -47,6 +45,30 @@ void AddNetMenuItems();
 void InitNetMenuItems();
 
 int UpdateConnectionsOnConnect();
+
+// Broadcasts the current dwViewColumns to every open Details-mode window.
+void ApplyColumnsToAllWindows() {
+    for (HWND hwnd = GetWindow(hwndMDIClient, GW_CHILD); hwnd; hwnd = GetWindow(hwnd, GW_HWNDNEXT)) {
+        if (GetWindow(hwnd, GW_OWNER))
+            continue;
+
+        if ((int)GetWindowLongPtr(hwnd, GWL_TYPE) == TYPE_SEARCH) {
+            if (GetWindowLongPtr(hwnd, GWL_VIEW) != VIEW_NAMEONLY) {
+                SendMessage(hwnd, FS_CHANGEDISPLAY, CD_VIEW, 0L);
+            }
+        } else {
+            if (GetWindowLongPtr(hwnd, GWL_VIEW) != VIEW_NAMEONLY) {
+                HWND hwndDir = HasDirWindow(hwnd);
+                if (hwndDir) {
+                    SendMessage(hwndDir, FS_CHANGEDISPLAY, CD_VIEW, MAKELONG(LOWORD(dwViewColumns), TRUE));
+                }
+            }
+        }
+    }
+
+    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+    UpdateToolbarState(hwndActive);
+}
 
 void NotifySearchFSC(LPWSTR pszPath, DWORD dwFunction) {
     if (!hwndSearch)
@@ -1796,19 +1818,17 @@ BOOL AppCommandProc(DWORD id) {
             break;
 
         case IDM_VNAME:
-            dwFlags = VIEW_NAMEONLY | (GetWindowLongPtr(hwndActive, GWL_VIEW) & VIEW_NOCHANGE);
+            dwFlags = VIEW_NAMEONLY;
             id = CD_VIEW;
             goto ChangeDisplay;
 
         case IDM_VDETAILS:
-            dwFlags = VIEW_EVERYTHING | (GetWindowLongPtr(hwndActive, GWL_VIEW) & VIEW_NOCHANGE);
+            dwFlags = dwViewColumns;
             id = CD_VIEW;
             goto ChangeDisplay;
 
         case IDM_VOTHER:
             DialogBox(hAppInstance, (LPWSTR)MAKEINTRESOURCE(OTHERDLG), hwndFrame, OtherDlgProc);
-
-            dwFlags = GetWindowLongPtr(hwndActive, GWL_VIEW) & VIEW_EVERYTHING;
             break;
 
         case IDM_BYNAME:
@@ -1824,9 +1844,10 @@ BOOL AppCommandProc(DWORD id) {
             if (hwndT = HasDirWindow(hwndActive)) {
                 SendMessage(hwndT, FS_CHANGEDISPLAY, id, MAKELONG(LOWORD(dwFlags), 0));
             } else if (hwndActive == hwndSearch) {
-                SetWindowLongPtr(hwndActive, GWL_VIEW, dwFlags);
-                SendMessage(hwndSearch, FS_CHANGEDISPLAY, CD_VIEW, 0L);
-                //        InvalidateRect(hwndActive, NULL, TRUE);
+                if (id == CD_VIEW) {
+                    SetWindowLongPtr(hwndActive, GWL_VIEW, (dwFlags != VIEW_NAMEONLY) ? VIEW_DETAIL : VIEW_NAMEONLY);
+                    SendMessage(hwndSearch, FS_CHANGEDISPLAY, CD_VIEW, 0L);
+                }
             }
 
             // Update menu checkmarks for View menu items
@@ -1840,12 +1861,10 @@ BOOL AppCommandProc(DWORD id) {
                 DrawMenuBar(hwndFrame);
             } else if (id == CD_VIEW) {
                 HMENU hMenu = GetMenu(hwndFrame);
-                DWORD viewFlags = dwFlags & VIEW_EVERYTHING;
-                CheckMenuItem(hMenu, IDM_VNAME, (viewFlags == VIEW_NAMEONLY) ? MF_CHECKED : MF_UNCHECKED);
-                CheckMenuItem(hMenu, IDM_VDETAILS, (viewFlags == VIEW_EVERYTHING) ? MF_CHECKED : MF_UNCHECKED);
-                CheckMenuItem(
-                    hMenu, IDM_VOTHER,
-                    (viewFlags != VIEW_NAMEONLY && viewFlags != VIEW_EVERYTHING) ? MF_CHECKED : MF_UNCHECKED);
+                DWORD dwMode = (DWORD)GetWindowLongPtr(hwndActive, GWL_VIEW);
+                CheckMenuItem(hMenu, IDM_VNAME, (dwMode == VIEW_NAMEONLY) ? MF_CHECKED : MF_UNCHECKED);
+                CheckMenuItem(hMenu, IDM_VDETAILS, (dwMode != VIEW_NAMEONLY) ? MF_CHECKED : MF_UNCHECKED);
+                CheckMenuItem(hMenu, IDM_VOTHER, MF_UNCHECKED);
                 DrawMenuBar(hwndFrame);
             }
 

@@ -698,7 +698,7 @@ SearchWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             wParam &= ~CD_DONTSTEAL;
 
             if (wParam == CD_VIEW || wParam == CD_SEARCHFONT) {
-                dwNewView = (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW);
+                dwNewView = GetEffectiveView((DWORD)GetWindowLongPtr(hwnd, GWL_VIEW));
 
                 //
                 // in case font changed, update maxExt
@@ -836,7 +836,7 @@ SearchWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
             hwndSearch = hwnd;
             SetWindowLongPtr(hwnd, GWL_TYPE, TYPE_SEARCH);
-            SetWindowLongPtr(hwnd, GWL_VIEW, dwNewView);
+            SetWindowLongPtr(hwnd, GWL_VIEW, (dwNewView != VIEW_NAMEONLY) ? VIEW_DETAIL : VIEW_NAMEONLY);
             SetWindowLongPtr(hwnd, GWL_SORT, IDD_NAME);
             SetWindowLongPtr(hwnd, GWL_FSCFLAG, FALSE);
             SetWindowLongPtr(hwnd, GWL_HDTA, 0L);
@@ -864,7 +864,7 @@ SearchWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case WM_DRAWITEM: {
             LPDRAWITEMSTRUCT lpLBItem;
             PWORD pwTabs;
-            DWORD dwView = (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW);
+            DWORD dwView = GetEffectiveView((DWORD)GetWindowLongPtr(hwnd, GWL_VIEW));
 
             lpLBItem = (LPDRAWITEMSTRUCT)lParam;
             iSel = lpLBItem->itemID;
@@ -894,7 +894,7 @@ SearchWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     InvalidateRect(SearchInfo.hwndLB, NULL, TRUE);
             }
 
-            DrawItem(hwnd, (DWORD)GetWindowLongPtr(hwnd, GWL_VIEW), (LPDRAWITEMSTRUCT)lParam, TRUE);
+            DrawItem(hwnd, GetEffectiveView((DWORD)GetWindowLongPtr(hwnd, GWL_VIEW)), (LPDRAWITEMSTRUCT)lParam, TRUE);
             break;
         }
 
@@ -1142,7 +1142,7 @@ SearchDrive(LPVOID lpParameter) {
 
     FixTabsAndThings(
         SearchInfo.hwndLB, (WORD*)GetWindowLongPtr(hwndSearch, GWL_TABARRAY), maxExtLast, 0,
-        (DWORD)GetWindowLongPtr(hwndSearch, GWL_VIEW));
+        GetEffectiveView((DWORD)GetWindowLongPtr(hwndSearch, GWL_VIEW)));
 
     SearchInfo.iRet =
         FillSearchLB(SearchInfo.hwndLB, SearchInfo.szSearch, !SearchInfo.bDontSearchSubs, SearchInfo.bIncludeSubDirs);

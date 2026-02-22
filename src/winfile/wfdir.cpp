@@ -175,7 +175,7 @@ void DrawItem(HWND hwnd, DWORD dwViewOpts, LPDRAWITEMSTRUCT lpLBItem, BOOL bHasF
         }
     }
 
-    if (dwViewOpts & VIEW_EVERYTHING) {
+    if (dwViewOpts & VIEW_COLUMN_MASK) {
         //
         // We want to display the entire line
         //
@@ -758,7 +758,7 @@ DirWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case WM_DRAWITEM:
 
             DrawItem(
-                hwnd, (DWORD)GetWindowLongPtr(hwndParent, GWL_VIEW), (LPDRAWITEMSTRUCT)lParam,
+                hwnd, GetEffectiveView((DWORD)GetWindowLongPtr(hwndParent, GWL_VIEW)), (LPDRAWITEMSTRUCT)lParam,
                 ((LPDRAWITEMSTRUCT)lParam)->hwndItem == GetFocus());
             break;
 
@@ -1030,33 +1030,31 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     goto ResetSelection;
 
                 case CD_VIEW: {
-                    DWORD dwCurView;
-
                     //
                     // change the view type (name only, vs full details)
-                    // Warning! Convoluted Code!  We want to destroy the
-                    // listbox only if we are going between Name Only view
-                    // and Details view.
+                    // lParam carries the effective column bitmask (0 for List, column bits for Details).
+                    // GWL_VIEW stores the mode: VIEW_NAMEONLY or VIEW_DETAIL.
                     //
                     dwNewView = LOWORD(lParam);
-                    dwCurView = (DWORD)GetWindowLongPtr(hwndListParms, GWL_VIEW);
+                    DWORD dwCurMode = (DWORD)GetWindowLongPtr(hwndListParms, GWL_VIEW);
+                    DWORD dwNewMode = (dwNewView != VIEW_NAMEONLY) ? VIEW_DETAIL : VIEW_NAMEONLY;
 
                     //
                     // hiword lParam == TRUE means always refresh
                     //
-                    if (dwNewView == dwCurView && !HIWORD(lParam))
+                    if (dwNewMode == dwCurMode && !HIWORD(lParam))
                         break;
 
                     //
-                    // special case the long and partial view change
-                    // this doesn't require us to recreate the listbox
+                    // Fast path: both old and new are Details mode.
+                    // Only columns changed — update tabs and repaint without recreating the listbox.
                     //
-                    if ((VIEW_EVERYTHING & dwNewView) && (VIEW_EVERYTHING & dwCurView)) {
-                        SetWindowLongPtr(hwndListParms, GWL_VIEW, dwNewView);
+                    if (dwNewMode != VIEW_NAMEONLY && dwCurMode != VIEW_NAMEONLY) {
+                        SetWindowLongPtr(hwndListParms, GWL_VIEW, VIEW_DETAIL);
 
                         FixTabsAndThings(
                             hwndLB, (WORD*)GetWindowLongPtr(hwnd, GWL_TABARRAY), GetMaxExtent(hwndLB, lpStart, FALSE),
-                            GetMaxExtent(hwndLB, lpStart, TRUE), dwNewView);
+                            GetMaxExtent(hwndLB, lpStart, TRUE), dwViewColumns);
 
                         InvalidateRect(hwndLB, NULL, TRUE);
 
@@ -1087,7 +1085,7 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     // Create a new one (preserving the Sort setting).
                     //
                     dwNewSort = (DWORD)GetWindowLongPtr(hwndListParms, GWL_SORT);
-                    SetWindowLongPtr(hwndListParms, GWL_VIEW, dwNewView);
+                    SetWindowLongPtr(hwndListParms, GWL_VIEW, dwNewMode);
 
                     bCreateDTABlock = FALSE;  // and szPath is NOT set
 
@@ -1185,7 +1183,7 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     // Create a new one (preserving the Sort setting)
                     //
                     dwNewSort = (DWORD)GetWindowLongPtr(hwndListParms, GWL_SORT);
-                    dwNewView = (DWORD)GetWindowLongPtr(hwndListParms, GWL_VIEW);
+                    dwNewView = GetEffectiveView((DWORD)GetWindowLongPtr(hwndListParms, GWL_VIEW));
 
                     SetWindowLongPtr(hwnd, GWLP_USERDATA, 1);
                     SendMessage(hwndLB, LB_RESETCONTENT, 0, 0L);
@@ -1243,7 +1241,7 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
         CreateLB:
 
-            if ((dwNewView & VIEW_EVERYTHING) == VIEW_NAMEONLY)
+            if (dwNewView == VIEW_NAMEONLY)
                 ws = WS_DIRSTYLE | LBS_MULTICOLUMN | WS_HSCROLL | WS_VISIBLE | WS_BORDER | LBS_DISABLENOSCROLL;
             else
                 ws = WS_DIRSTYLE | WS_HSCROLL | WS_VSCROLL | WS_VISIBLE | WS_BORDER | LBS_DISABLENOSCROLL;
@@ -1288,7 +1286,7 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             //        to see if the values have been initialized yet.
             //
             if (!GetWindowLongPtr(hwndListParms, GWL_SORT)) {
-                SetWindowLongPtr(hwndListParms, GWL_VIEW, dwNewView);
+                SetWindowLongPtr(hwndListParms, GWL_VIEW, (dwNewView != VIEW_NAMEONLY) ? VIEW_DETAIL : VIEW_NAMEONLY);
                 SetWindowLongPtr(hwndListParms, GWL_SORT, dwNewSort);
             }
 
@@ -1344,7 +1342,7 @@ ChangeDisplay(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             //
             // set the font and dimensions here
             //
-            SetLBFont(hwnd, hwndLB, hFont, (DWORD)GetWindowLongPtr(hwndListParms, GWL_VIEW), lpStart);
+            SetLBFont(hwnd, hwndLB, hFont, GetEffectiveView((DWORD)GetWindowLongPtr(hwndListParms, GWL_VIEW)), lpStart);
 
             if (pszInitialDirSel) {
                 //
@@ -2032,7 +2030,7 @@ void SetLBFont(HWND hwnd, HWND hwndLB, HANDLE hNewFont, DWORD dwViewFlags, LPXDT
     //
     // if we are in name only view we change the width
     //
-    if ((VIEW_EVERYTHING & dwViewFlags) == VIEW_NAMEONLY) {
+    if (dwViewFlags == VIEW_NAMEONLY) {
         SendMessage(hwndLB, LB_SETCOLUMNWIDTH, dxMaxExtent + dxFolder + dyBorderx2, 0L);
 
     } else {

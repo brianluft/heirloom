@@ -417,15 +417,15 @@ BOOL shouldSkipAccelerator(MSG* pMsg);
 #define CD_ALLOWABORT 0x8000
 
 #define VIEW_NAMEONLY 0x0000
-#define VIEW_UPPERCASE 0x0001
+#define VIEW_DETAIL 0x0001
 #define VIEW_SIZE 0x0002
 #define VIEW_DATE 0x0004
 #define VIEW_TIME 0x0008
 #define VIEW_FLAGS 0x0010
-// VIEW_PLUSES removed, was 0x0020
 #define VIEW_DOSNAMES 0x0040
 
-#define VIEW_EVERYTHING (VIEW_SIZE | VIEW_TIME | VIEW_DATE | VIEW_FLAGS)
+#define VIEW_COLUMN_MASK (VIEW_SIZE | VIEW_DATE | VIEW_TIME | VIEW_FLAGS | VIEW_DOSNAMES)
+#define VIEW_COLUMNS_DEFAULT (VIEW_SIZE | VIEW_DATE | VIEW_TIME)
 
 #define CBSECTORSIZE 512
 
@@ -736,6 +736,13 @@ Extern UINT wBrowseMessage;
 Extern LPWSTR pszInitialDirSel;
 Extern DWORD dwNewView EQ(VIEW_NAMEONLY);
 Extern DWORD dwNewSort EQ(IDD_NAME);
+Extern DWORD dwViewColumns EQ(VIEW_COLUMNS_DEFAULT);
+
+// Returns the effective view bitmask for rendering:
+// VIEW_NAMEONLY if window is in List mode, or dwViewColumns if in Details mode.
+inline DWORD GetEffectiveView(DWORD dwMode) {
+    return (dwMode != VIEW_NAMEONLY) ? dwViewColumns : VIEW_NAMEONLY;
+}
 
 Extern LARGE_INTEGER qFreeSpace;
 Extern LARGE_INTEGER qTotalSpace;

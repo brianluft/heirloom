@@ -10,7 +10,7 @@ Unlike progman's clean separation of UI and business logic, winfile uses a tradi
 
 1. **Presentation and Logic Mixed** - UI components directly handle business logic
 2. **Direct Win32 API Usage** - Minimal abstraction over operating system APIs
-3. **Global State Management** - Extensive use of global variables for shared state
+3. **Global State Management** - Extensive use of global variables for shared state (e.g., `dwViewColumns` for the column selection applied to all Detail-mode windows)
 4. **Traditional C Programming** - Procedural programming with structs and function pointers
 
 ### Window Structure Hierarchy
@@ -74,7 +74,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Multi-Column Display** - Name, size, date, time, attributes with custom drawing
 - **Sorting** - Multiple sort criteria for file ordering
 - **Selection Management** - Multi-selection with drag-and-drop support
-- **View Modes** - Name-only vs. detailed views with customizable columns
+- **View Modes** - Two modes: List (name-only) and Details (multi-column). GWL_VIEW stores only a mode sentinel (`VIEW_NAMEONLY` or `VIEW_DETAIL`), never column flags. Column selection is a global setting in `dwViewColumns`; `GetEffectiveView()` merges mode + columns at point of use.
 
 ### File Operations Layer
 
@@ -174,7 +174,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Dual-Pane View** - Resizable split between tree and file listing
 - **Multiple Windows** - MDI interface supporting up to 27 concurrent windows
 - **Window Minimization** - Minimized MDI children appear as icons in a bottom bar (simulating Windows 3.11 behavior), double-click to restore
-- **Customizable Views** - Name-only, detailed, with configurable columns and sorting; all files are always shown (no file type filtering)
+- **Customizable Views** - List and Details modes with globally-configurable columns (View > Select Columns) and per-window sorting; all files are always shown (no file type filtering). Column changes are broadcast to all open windows immediately via `ApplyColumnsToAllWindows()`.
 - **Toolbar** - Standard toolbar with location combobox, view/sort radio buttons, and new window button
 - **Search Interface** - Integrated search with real-time results and progress
 
@@ -196,6 +196,14 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Visit Website** - Opens `https://heirloomapps.com` in the default browser using ShellExecute
 
 ## Technical Details
+
+### View Mode and Column Architecture
+- **Two View Modes** - `VIEW_NAMEONLY` (0x0000) for List mode, `VIEW_DETAIL` (0x0001) for Details mode. Per-window `GWL_VIEW` stores only the mode sentinel, never column flags.
+- **Global Column Selection** - `dwViewColumns` (bitmask of `VIEW_SIZE`, `VIEW_DATE`, `VIEW_TIME`, `VIEW_FLAGS`, `VIEW_DOSNAMES`) is a single global that controls which columns are visible in all Detail-mode windows. Persisted as `ViewColumns` in the INI file.
+- **`GetEffectiveView(dwMode)`** - Inline helper that merges mode + columns: returns `dwViewColumns` if `dwMode != VIEW_NAMEONLY`, else `VIEW_NAMEONLY`. Used at every rendering point.
+- **`ApplyColumnsToAllWindows()`** - Broadcasts column changes to all open MDI children. Dir windows receive `FS_CHANGEDISPLAY/CD_VIEW`; search windows receive `FS_CHANGEDISPLAY/CD_VIEW` with no params.
+- **Fast/Slow Path** - `CD_VIEW` in `wfdir.cpp` has a fast path (both old and new are Detail mode — just `FixTabsAndThings` + repaint) and a slow path (crossing List/Details boundary — destroy and recreate listbox with different style).
+- **Default Columns** - `VIEW_COLUMNS_DEFAULT` = Size + Date + Time. Applied on fresh install or if INI value is invalid/zero.
 
 ### Programming Model
 - **Win32 API Direct Usage** - Minimal wrapper layers around Windows APIs
@@ -249,7 +257,7 @@ Frame Window (FrameWndProc) - hwndFrame
 - **Extension Framework**: `wfext.cpp` - Plugin support infrastructure
 
 ### Configuration and Data
-- **Settings Storage**: INI file for configuration; settings are always saved on exit and when closing the Options dialog
+- **Settings Storage**: INI file for configuration; settings are always saved on exit and when closing the Options dialog. Key settings include `ViewColumns` (global column bitmask) and per-window `dir{n}` entries (which store mode as `VIEW_NAMEONLY`/`VIEW_DETAIL` only, not column flags).
 - **Icon Resources**: Comprehensive icon sets for files, folders, and drives
 - **Help Integration**: Windows Help system integration for user assistance
 

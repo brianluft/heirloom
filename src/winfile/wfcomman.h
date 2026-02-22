@@ -10,3 +10,4 @@ void SwitchToSafeDrive();
 DWORD ReadMoveStatus();
 void UpdateMoveStatus(DWORD dwEffect);
 BOOL AppCommandProc(DWORD id);
+void ApplyColumnsToAllWindows();

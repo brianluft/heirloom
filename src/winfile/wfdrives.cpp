@@ -480,7 +480,7 @@ void UpdateToolbarState(HWND hwndActive) {
     if (hwndActive && hwndActive != hwndSearch) {
         // It's a tree window - enable toolbar items and read state
         bEnable = TRUE;
-        dwView = (DWORD)GetWindowLongPtr(hwndActive, GWL_VIEW) & VIEW_EVERYTHING;
+        dwView = (DWORD)GetWindowLongPtr(hwndActive, GWL_VIEW);
         dwSort = (DWORD)GetWindowLongPtr(hwndActive, GWL_SORT);
     }
 
@@ -516,7 +516,7 @@ void UpdateToolbarState(HWND hwndActive) {
 
     // Update view radio group
     SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VNAME, MAKELONG(dwView == VIEW_NAMEONLY, 0));
-    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VDETAILS, MAKELONG(dwView == VIEW_EVERYTHING, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VDETAILS, MAKELONG(dwView != VIEW_NAMEONLY, 0));
 
     // Update sort radio group
     SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYNAME, MAKELONG(dwSort == IDD_NAME, 0));

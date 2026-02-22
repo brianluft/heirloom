@@ -192,6 +192,13 @@ void GetSettings() {
     bConfirmReadOnly = GetPrivateProfileInt(kSettings, kConfirmReadOnly, bConfirmReadOnly, szTheINIFile);
     uChangeNotifyTime = GetPrivateProfileInt(kSettings, kChangeNotifyTime, uChangeNotifyTime, szTheINIFile);
     bScrollOnExpand = GetPrivateProfileInt(kSettings, kScrollOnExpand, bScrollOnExpand, szTheINIFile);
+
+    // Load global column selection
+    dwViewColumns = (DWORD)GetPrivateProfileInt(kSettings, kViewColumns, VIEW_COLUMNS_DEFAULT, szTheINIFile);
+    dwViewColumns &= VIEW_COLUMN_MASK;
+    if (dwViewColumns == 0)
+        dwViewColumns = VIEW_COLUMNS_DEFAULT;
+
     weight = GetPrivateProfileInt(kSettings, kFaceWeight, 400, szTheINIFile);
 
     GetPrivateProfileString(kSettings, kSize, L"9", szTemp, COUNTOF(szTemp), szTheINIFile);
@@ -482,7 +489,8 @@ BOOL CreateSavedWindows(LPCWSTR pszInitialDir) {
                     continue;
                 }
 
-                dwNewView = win.dwView;
+                // Translate saved view: any non-zero column bits = Details mode
+                dwNewView = (win.dwView != VIEW_NAMEONLY) ? dwViewColumns : VIEW_NAMEONLY;
                 dwNewSort = win.dwSort;
 
                 hwnd = CreateTreeWindow(
@@ -524,7 +532,8 @@ BOOL CreateSavedWindows(LPCWSTR pszInitialDir) {
             // use the settings of the most recent window as defaults
             //
 
-            dwNewView = win.dwView;
+            // Translate saved view: any non-zero column bits = Details mode
+            dwNewView = (win.dwView != VIEW_NAMEONLY) ? dwViewColumns : VIEW_NAMEONLY;
             dwNewSort = win.dwSort;
 
             hwnd = CreateTreeWindow(
