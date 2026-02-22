@@ -12,7 +12,6 @@
 #include "winfile.h"
 #include "lfn.h"
 #include "wfcopy.h"
-#include "resize.h"
 #include "wfutil.h"
 #include "wftree.h"
 #include "wfsearch.h"

@@ -14,7 +14,6 @@
 #include <dlgs.h>
 #include "lfn.h"
 #include "wfcopy.h"
-#include "resize.h"
 #include "gitbash.h"
 #include "wfutil.h"
 #include "wfdir.h"
@@ -211,10 +210,6 @@ SelectDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
     WCHAR szList[128];
     WCHAR szSpec[MAXFILENAMELEN];
     LPWSTR p;
-
-    if (ResizeDialogProc(hDlg, wMsg, wParam, lParam)) {
-        return TRUE;
-    }
 
     UNREFERENCED_PARAMETER(lParam);
 

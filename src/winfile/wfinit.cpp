@@ -32,7 +32,6 @@
 
 #include <ole2.h>
 #include <shlobj.h>
-#include "resize.h"
 
 WCHAR szNTlanman[] = L"ntlanman.dll";
 WCHAR szHelv[] = L"Segoe UI";
@@ -938,10 +937,6 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
     // wndClass.lpszMenuName   = NULL;
 
     if (!RegisterClass(&wndClass)) {
-        return FALSE;
-    }
-
-    if (!ResizeDialogInitialize(hInstance)) {
         return FALSE;
     }
 

@@ -7,7 +7,6 @@
 #pragma once
 
 #include <windows.h>
-#include "resize.h"
 #include "dlgs.h"
 
 #define FUNC_MOVE 0x0001

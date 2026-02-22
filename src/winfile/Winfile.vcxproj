@@ -212,7 +212,6 @@
     <ClInclude Include="mpr.h" />
     <ClInclude Include="numfmt.h" />
     <ClInclude Include="res.h" />
-    <ClInclude Include="resize.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stringconstants.h" />
     <ClInclude Include="suggest.h" />
@@ -269,7 +268,6 @@
     <ClCompile Include="lfn.cpp" />
     <ClCompile Include="lfnmisc.cpp" />
     <ClCompile Include="numfmt.cpp" />
-    <ClCompile Include="resize.cpp" />
     <ClCompile Include="suggest.cpp" />
     <ClCompile Include="treectl.cpp" />
     <ClCompile Include="wfchgnot.cpp" />

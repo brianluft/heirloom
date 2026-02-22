@@ -35,7 +35,6 @@
     <ClCompile Include="wfdpi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="resize.cpp" />
     <ClCompile Include="wfpng.cpp" />
     <ClCompile Include="wfdragsrc.cpp" />
     <ClCompile Include="wfrecyclebin.cpp" />
@@ -64,7 +63,6 @@
     <ClInclude Include="wfdpi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resize.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="wfdragsrc.h" />
     <ClInclude Include="gitbash.h" />

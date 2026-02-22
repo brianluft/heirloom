@@ -14,7 +14,6 @@
 #include "wfcopy.h"
 #include "wnetcaps.h"  // WNetGetCaps()
 #include "commdlg.h"
-#include "resize.h"
 #include "wfdos.h"
 #include "wfutil.h"
 #include "wfdir.h"
@@ -88,10 +87,6 @@ CALLBACK
 SearchDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
     LPWSTR p;
     WCHAR szStart[MAXFILENAMELEN];
-
-    if (ResizeDialogProc(hDlg, wMsg, wParam, lParam)) {
-        return TRUE;
-    }
 
     switch (wMsg) {
         case WM_INITDIALOG:
@@ -254,10 +249,6 @@ RunDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
     WCHAR szTemp2[MAXPATHLEN];
     WCHAR sz3[MAXPATHLEN];
 
-    if (ResizeDialogProc(hDlg, wMsg, wParam, lParam)) {
-        return TRUE;
-    }
-
     switch (wMsg) {
         case WM_INITDIALOG:
             SetDlgDirectory(hDlg, NULL);
@@ -414,10 +405,6 @@ SuperDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
     WCHAR szStr[256];
 
     static PCOPYINFO pCopyInfo;
-
-    if (ResizeDialogProc(hDlg, wMsg, wParam, lParam)) {
-        return TRUE;
-    }
 
     switch (wMsg) {
         case WM_INITDIALOG: {
@@ -777,10 +764,6 @@ MakeDirDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
     //
     WCHAR szPath[MAXPATHLEN * 2];
     int ret;
-
-    if (ResizeDialogProc(hDlg, wMsg, wParam, lParam)) {
-        return TRUE;
-    }
 
     switch (wMsg) {
         case WM_INITDIALOG:
