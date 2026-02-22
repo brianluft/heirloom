@@ -15,8 +15,8 @@ static int getDpiScaledValue(HWND hwnd, int value) {
 // Base values at 96 DPI
 constexpr int BASE_ICON_SIZE = 32;
 constexpr int BASE_SPLITTER_HEIGHT = 8;
-constexpr int BASE_MIN_CONTROL_HEIGHT = 64;
-constexpr int DEFAULT_HEIGHT = 64;
+constexpr int BASE_MIN_CONTROL_HEIGHT = 96;
+constexpr int DEFAULT_HEIGHT = 96;
 
 LRESULT CALLBACK MinimizedWindowListControlProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     auto* control = libheirloom::getWindowData<MinimizedWindowListControl>(hwnd);
