@@ -29,6 +29,11 @@
 #define IDC_TOOLBAR_BUTTONS 3010
 #define IDC_LOCATION_COMBO 3011
 
+// Internal toolbar child windows
+static HWND hwndToolbarCtrl = NULL;
+static HWND hwndLocationCombo = NULL;
+static HIMAGELIST himlDriveIcons = NULL;
+
 // Button definitions for the toolbar
 static const struct {
     int idm;       // command ID (0 = separator)
@@ -50,8 +55,8 @@ static const struct {
 };
 #define NUM_TOOLBAR_BUTTONS (sizeof(toolbarButtons) / sizeof(toolbarButtons[0]))
 
-static void PopulateLocationComboForData(ChildToolbarData* data);
-static void CreateDriveImageListForData(ChildToolbarData* data, UINT dpi);
+static void PopulateLocationCombo();
+static void CreateDriveImageList(UINT dpi);
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -365,26 +370,26 @@ static HIMAGELIST CreatePngImageList(UINT dpi, PNG_TYPE type, int count, UINT ic
 }
 
 //
-// Build the drive icon image list for a specific toolbar instance.
+// Build the drive icon image list for the location combo box.
 //
-static void CreateDriveImageListForData(ChildToolbarData* data, UINT dpi) {
+static void CreateDriveImageList(UINT dpi) {
     UINT iconCX, iconCY;
     PngGetScaledSize(dpi, PNG_TYPE_DRIVE, 0, &iconCX, &iconCY);
     if (iconCX == 0)
         iconCX = iconCY = 16;
 
-    if (data->himlDriveIcons) {
-        ImageList_Destroy(data->himlDriveIcons);
+    if (himlDriveIcons) {
+        ImageList_Destroy(himlDriveIcons);
     }
 
-    data->himlDriveIcons = CreatePngImageList(dpi, PNG_TYPE_DRIVE, 6, iconCX, iconCY);
+    himlDriveIcons = CreatePngImageList(dpi, PNG_TYPE_DRIVE, 6, iconCX, iconCY);
 }
 
-static void PopulateLocationComboForData(ChildToolbarData* data) {
-    if (!data->hwndLocationCombo)
+static void PopulateLocationCombo() {
+    if (!hwndLocationCombo)
         return;
 
-    SendMessage(data->hwndLocationCombo, CB_RESETCONTENT, 0, 0);
+    SendMessage(hwndLocationCombo, CB_RESETCONTENT, 0, 0);
 
     COMBOBOXEXITEMW cbei = {};
     cbei.mask = CBEIF_TEXT | CBEIF_IMAGE | CBEIF_SELECTEDIMAGE;
@@ -402,7 +407,7 @@ static void PopulateLocationComboForData(ChildToolbarData* data) {
         cbei.iImage = aDriveInfo[drive].iOffset;
         cbei.iSelectedImage = aDriveInfo[drive].iOffset;
 
-        SendMessage(data->hwndLocationCombo, CBEM_INSERTITEM, 0, (LPARAM)&cbei);
+        SendMessage(hwndLocationCombo, CBEM_INSERTITEM, 0, (LPARAM)&cbei);
     }
 }
 
@@ -483,22 +488,27 @@ void NavigateToPath(LPCWSTR pszPath) {
 }
 
 void UpdateToolbarState(HWND hwndActive) {
-    if (!hwndActive || hwndActive == hwndSearch)
+    if (!hwndToolbarCtrl)
         return;
 
-    HWND hwndToolbar = GetChildToolbar(hwndActive);
-    if (!hwndToolbar)
-        return;
+    BOOL bEnable = FALSE;
+    DWORD dwView = VIEW_NAMEONLY;
+    DWORD dwSort = IDD_NAME;
 
-    ChildToolbarData* data = GetToolbarData(hwndToolbar);
-    if (!data || !data->hwndToolbarCtrl)
-        return;
+    if (hwndActive && hwndActive != hwndSearch) {
+        // It's a tree window - enable toolbar items and read state
+        bEnable = TRUE;
+        dwView = (DWORD)GetWindowLongPtr(hwndActive, GWL_VIEW) & VIEW_EVERYTHING;
+        dwSort = (DWORD)GetWindowLongPtr(hwndActive, GWL_SORT);
+    }
 
-    DWORD dwView = (DWORD)GetWindowLongPtr(hwndActive, GWL_VIEW) & VIEW_EVERYTHING;
-    DWORD dwSort = (DWORD)GetWindowLongPtr(hwndActive, GWL_SORT);
+    // Update location combobox enable state
+    if (hwndLocationCombo) {
+        EnableWindow(hwndLocationCombo, bEnable);
+    }
 
     // Update combobox to show the active window's full path
-    if (data->hwndLocationCombo) {
+    if (hwndLocationCombo && hwndActive) {
         DRIVE drive = (DRIVE)GetWindowLongPtr(hwndActive, GWL_TYPE);
         if (drive == TYPE_SEARCH) {
             drive = (DRIVE)SendMessage(hwndSearch, FS_GETDRIVE, 0, 0L) - CHAR_A;
@@ -507,7 +517,7 @@ void UpdateToolbarState(HWND hwndActive) {
         // Select the drive item so the correct drive icon shows
         for (int i = 0; i < cDrives; i++) {
             if (rgiDrive[i] == drive) {
-                SendMessage(data->hwndLocationCombo, CB_SETCURSEL, i, 0);
+                SendMessage(hwndLocationCombo, CB_SETCURSEL, i, 0);
                 break;
             }
         }
@@ -516,66 +526,38 @@ void UpdateToolbarState(HWND hwndActive) {
         WCHAR szPath[MAXPATHLEN];
         SendMessage(hwndActive, FS_GETDIRECTORY, MAXPATHLEN, (LPARAM)szPath);
         StripBackslash(szPath);
-        HWND hwndEdit = (HWND)SendMessage(data->hwndLocationCombo, CBEM_GETEDITCONTROL, 0, 0);
+        HWND hwndEdit = (HWND)SendMessage(hwndLocationCombo, CBEM_GETEDITCONTROL, 0, 0);
         if (hwndEdit) {
             SetWindowTextW(hwndEdit, szPath);
         }
     }
 
     // Update view radio group
-    SendMessage(data->hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VNAME, MAKELONG(dwView == VIEW_NAMEONLY, 0));
-    SendMessage(data->hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VDETAILS, MAKELONG(dwView == VIEW_EVERYTHING, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VNAME, MAKELONG(dwView == VIEW_NAMEONLY, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_VDETAILS, MAKELONG(dwView == VIEW_EVERYTHING, 0));
 
     // Update sort radio group
-    SendMessage(data->hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYNAME, MAKELONG(dwSort == IDD_NAME, 0));
-    SendMessage(data->hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYTYPE, MAKELONG(dwSort == IDD_TYPE, 0));
-    SendMessage(data->hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYSIZE, MAKELONG(dwSort == IDD_SIZE, 0));
-    SendMessage(data->hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYDATE, MAKELONG(dwSort == IDD_DATE, 0));
-    SendMessage(data->hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYFDATE, MAKELONG(dwSort == IDD_FDATE, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYNAME, MAKELONG(dwSort == IDD_NAME, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYTYPE, MAKELONG(dwSort == IDD_TYPE, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYSIZE, MAKELONG(dwSort == IDD_SIZE, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYDATE, MAKELONG(dwSort == IDD_DATE, 0));
+    SendMessage(hwndToolbarCtrl, TB_CHECKBUTTON, IDM_BYFDATE, MAKELONG(dwSort == IDD_FDATE, 0));
 
-    // Enable/disable view and sort buttons (always enabled for tree windows)
+    // Enable/disable view and sort buttons
     for (int i = 0; i < (int)NUM_TOOLBAR_BUTTONS; i++) {
         if (toolbarButtons[i].idm && toolbarButtons[i].group > 0) {
-            SendMessage(data->hwndToolbarCtrl, TB_ENABLEBUTTON, toolbarButtons[i].idm, MAKELONG(TRUE, 0));
+            SendMessage(hwndToolbarCtrl, TB_ENABLEBUTTON, toolbarButtons[i].idm, MAKELONG(bEnable, 0));
         }
     }
 }
 
 void RefreshToolbarDriveList() {
-    // Enumerate all tree MDI children and refresh each toolbar's drive list
-    for (HWND hwndT = GetWindow(hwndMDIClient, GW_CHILD); hwndT; hwndT = GetWindow(hwndT, GW_HWNDNEXT)) {
-        if (GetWindow(hwndT, GW_OWNER) || hwndT == hwndSearch)
-            continue;
-
-        HWND hwndToolbar = GetChildToolbar(hwndT);
-        if (!hwndToolbar)
-            continue;
-
-        ChildToolbarData* data = GetToolbarData(hwndToolbar);
-        if (!data)
-            continue;
-
-        UINT dpi = GetDpiForWindow(hwndToolbar);
-        CreateDriveImageListForData(data, dpi);
-        SendMessage(data->hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)data->himlDriveIcons);
-        PopulateLocationComboForData(data);
+    if (hwndLocationCombo) {
+        UINT dpi = GetDpiForWindow(hwndDriveBar);
+        CreateDriveImageList(dpi);
+        SendMessage(hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)himlDriveIcons);
+        PopulateLocationCombo();
     }
-}
-
-void ConfigureStatusBarParts(HWND hwndChildStatus) {
-    if (!hwndChildStatus)
-        return;
-
-    HDC hDC = GetDC(NULL);
-    int nInch = GetDeviceCaps(hDC, LOGPIXELSX);
-    ReleaseDC(NULL, hDC);
-
-    int nParts[3];
-    nParts[0] = nInch * 9 / 4 + (nInch * 7 / 8);
-    nParts[1] = nParts[0] + nInch * 5 / 2 + nInch * 7 / 8;
-    nParts[2] = -1;
-
-    SendMessage(hwndChildStatus, SB_SETPARTS, 3, (LPARAM)(LPINT)nParts);
 }
 
 static LRESULT CALLBACK
@@ -616,13 +598,8 @@ ToolbarSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR
 LRESULT
 CALLBACK
 DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
-    ChildToolbarData* data = GetToolbarData(hWnd);
-
     switch (wMsg) {
         case WM_CREATE: {
-            data = new ChildToolbarData{};
-            SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)data);
-
             UINT dpi = GetDpiForWindow(hWnd);
             ToolbarMetrics m = GetToolbarMetrics(dpi);
 
@@ -633,37 +610,38 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                 iconCX = iconCY = ScaleValueForDpi(16, dpi);
 
             // Create the location combo box (ComboBoxEx for icon support)
-            CreateDriveImageListForData(data, dpi);
+            CreateDriveImageList(dpi);
 
-            data->hwndLocationCombo = CreateWindowExW(
+            hwndLocationCombo = CreateWindowExW(
                 0, WC_COMBOBOXEXW, NULL, WS_CHILD | WS_VISIBLE | CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL,
                 m.leftMargin, 0, 100, m.comboDropdownHeight, hWnd, (HMENU)(INT_PTR)IDC_LOCATION_COMBO, hAppInstance,
                 NULL);
 
-            if (data->hwndLocationCombo) {
-                SendMessage(data->hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)data->himlDriveIcons);
-                PopulateLocationComboForData(data);
+            if (hwndLocationCombo) {
+                hwndDriveList = hwndLocationCombo;  // keep global in sync for compatibility
+                SendMessage(hwndLocationCombo, CBEM_SETIMAGELIST, 0, (LPARAM)himlDriveIcons);
+                PopulateLocationCombo();
             }
 
             // Create the toolbar control for buttons
-            data->hwndToolbarCtrl = CreateWindowExW(
+            hwndToolbarCtrl = CreateWindowExW(
                 0, TOOLBARCLASSNAMEW, NULL,
                 WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NORESIZE |
                     CCS_NOPARENTALIGN,
                 0, 0, 0, 0, hWnd, (HMENU)(INT_PTR)IDC_TOOLBAR_BUTTONS, hAppInstance, NULL);
 
-            if (data->hwndToolbarCtrl) {
-                SendMessage(data->hwndToolbarCtrl, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
+            if (hwndToolbarCtrl) {
+                SendMessage(hwndToolbarCtrl, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
 
                 // Set button size with padding around the icon
                 int btnWidth = iconCX + m.padding * 2;
                 int btnHeight = iconCY + m.padding * 2;
-                SendMessage(data->hwndToolbarCtrl, TB_SETBUTTONSIZE, 0, MAKELONG(btnWidth, btnHeight));
-                SendMessage(data->hwndToolbarCtrl, TB_SETPADDING, 0, MAKELONG(m.padding, m.padding));
+                SendMessage(hwndToolbarCtrl, TB_SETBUTTONSIZE, 0, MAKELONG(btnWidth, btnHeight));
+                SendMessage(hwndToolbarCtrl, TB_SETPADDING, 0, MAKELONG(m.padding, m.padding));
 
                 // Create image list with rendered toolbar PNGs
-                data->himlToolbarButtons = CreatePngImageList(dpi, PNG_TYPE_TOOLBAR, TBAR_IMG_COUNT, iconCX, iconCY);
-                SendMessage(data->hwndToolbarCtrl, TB_SETIMAGELIST, 0, (LPARAM)data->himlToolbarButtons);
+                HIMAGELIST himlButtons = CreatePngImageList(dpi, PNG_TYPE_TOOLBAR, TBAR_IMG_COUNT, iconCX, iconCY);
+                SendMessage(hwndToolbarCtrl, TB_SETIMAGELIST, 0, (LPARAM)himlButtons);
 
                 // Add buttons
                 TBBUTTON tbb[NUM_TOOLBAR_BUTTONS] = {};
@@ -680,19 +658,18 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
                         tbb[i].fsStyle = toolbarButtons[i].style;
                     }
                 }
-                SendMessage(data->hwndToolbarCtrl, TB_ADDBUTTONS, NUM_TOOLBAR_BUTTONS, (LPARAM)tbb);
-                SendMessage(data->hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
+                SendMessage(hwndToolbarCtrl, TB_ADDBUTTONS, NUM_TOOLBAR_BUTTONS, (LPARAM)tbb);
+                SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
 
-                SetWindowSubclass(data->hwndToolbarCtrl, ToolbarSubclassProc, 0, 0);
+                SendMessage(hwndToolbarCtrl, TB_AUTOSIZE, 0, 0);
+
+                SetWindowSubclass(hwndToolbarCtrl, ToolbarSubclassProc, 0, 0);
             }
 
             break;
         }
 
         case WM_SIZE: {
-            if (!data)
-                break;
-
             int cx = LOWORD(lParam);
             int cy = HIWORD(lParam);
             ToolbarMetrics m = GetToolbarMetrics(GetDpiForWindow(hWnd));
@@ -700,42 +677,37 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             // Get toolbar button area width and right-align it
             int toolbarWidth = 0;
             int toolbarHeight = 0;
-            if (data->hwndToolbarCtrl) {
+            if (hwndToolbarCtrl) {
                 RECT rcToolbar;
-                SendMessage(data->hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
+                SendMessage(hwndToolbarCtrl, TB_GETITEMRECT, NUM_TOOLBAR_BUTTONS - 1, (LPARAM)&rcToolbar);
                 toolbarWidth = rcToolbar.right;
                 toolbarHeight = rcToolbar.bottom;
                 int toolbarX = cx - toolbarWidth - m.rightMargin;
                 int toolbarY = max(0, (cy - toolbarHeight) / 2);
-                SetWindowPos(
-                    data->hwndToolbarCtrl, NULL, toolbarX, toolbarY, toolbarWidth, toolbarHeight, SWP_NOZORDER);
+                SetWindowPos(hwndToolbarCtrl, NULL, toolbarX, toolbarY, toolbarWidth, toolbarHeight, SWP_NOZORDER);
             }
 
             // Stretch combobox to fill remaining space
-            if (data->hwndLocationCombo) {
+            if (hwndLocationCombo) {
                 int comboRight = cx - toolbarWidth - m.spacing;
                 int comboWidth = max(60, comboRight - m.leftMargin);
                 RECT rcCombo;
-                GetWindowRect(data->hwndLocationCombo, &rcCombo);
+                GetWindowRect(hwndLocationCombo, &rcCombo);
                 int comboH = rcCombo.bottom - rcCombo.top;
                 int comboY = max(0, (cy - comboH) / 2);
                 SetWindowPos(
-                    data->hwndLocationCombo, NULL, m.leftMargin, comboY, comboWidth, m.comboDropdownHeight,
-                    SWP_NOZORDER);
+                    hwndLocationCombo, NULL, m.leftMargin, comboY, comboWidth, m.comboDropdownHeight, SWP_NOZORDER);
             }
             break;
         }
 
         case WM_COMMAND: {
-            if (!data)
-                return DefWindowProc(hWnd, wMsg, wParam, lParam);
-
             WORD wNotifyCode = HIWORD(wParam);
             WORD wID = LOWORD(wParam);
 
-            if ((HWND)lParam == data->hwndLocationCombo || wID == IDC_LOCATION_COMBO) {
+            if ((HWND)lParam == hwndLocationCombo || wID == IDC_LOCATION_COMBO) {
                 if (wNotifyCode == CBN_SELENDOK) {
-                    int sel = (int)SendMessage(data->hwndLocationCombo, CB_GETCURSEL, 0, 0);
+                    int sel = (int)SendMessage(hwndLocationCombo, CB_GETCURSEL, 0, 0);
                     if (sel >= 0 && sel < cDrives) {
                         HWND hwndChild = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
                         if (hwndChild && hwndChild != hwndSearch) {
@@ -748,7 +720,7 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             }
 
             // Forward toolbar button commands to the frame window
-            if ((HWND)lParam == data->hwndToolbarCtrl) {
+            if ((HWND)lParam == hwndToolbarCtrl) {
                 switch (wID) {
                     case IDM_VNAME:
                     case IDM_VDETAILS:
@@ -767,12 +739,9 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         case WM_NOTIFY: {
-            if (!data)
-                return DefWindowProc(hWnd, wMsg, wParam, lParam);
-
             LPNMHDR pnmh = (LPNMHDR)lParam;
 
-            if (pnmh->hwndFrom == data->hwndToolbarCtrl) {
+            if (pnmh->hwndFrom == hwndToolbarCtrl) {
                 if (pnmh->code == TBN_GETINFOTIPW) {
                     // Provide tooltips from the same string table as the menu help
                     LPNMTBGETINFOTIPW pTip = (LPNMTBGETINFOTIPW)lParam;
@@ -798,16 +767,20 @@ DrivesWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
         }
 
         case WM_DESTROY:
-            if (data) {
-                if (data->himlDriveIcons) {
-                    ImageList_Destroy(data->himlDriveIcons);
-                }
-                if (data->himlToolbarButtons) {
-                    ImageList_Destroy(data->himlToolbarButtons);
-                }
-                delete data;
-                SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
+            if (himlDriveIcons) {
+                ImageList_Destroy(himlDriveIcons);
+                himlDriveIcons = NULL;
             }
+            // The toolbar image list is owned by the toolbar and destroyed with it,
+            // but we need to be careful. Get it before the toolbar is destroyed.
+            if (hwndToolbarCtrl) {
+                HIMAGELIST himl = (HIMAGELIST)SendMessage(hwndToolbarCtrl, TB_GETIMAGELIST, 0, 0);
+                if (himl)
+                    ImageList_Destroy(himl);
+            }
+            hwndToolbarCtrl = NULL;
+            hwndLocationCombo = NULL;
+            hwndDriveList = NULL;
             break;
 
         default:

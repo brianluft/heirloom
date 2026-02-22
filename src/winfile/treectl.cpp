@@ -21,7 +21,6 @@
 #include "wfdir.h"
 #include "wftree.h"
 #include "wfcomman.h"
-#include "wfdrives.h"
 #include "stringconstants.h"
 #include <commctrl.h>
 #include <winnls.h>
@@ -571,12 +570,7 @@ BOOL ReadDirLevel(
     //
     //  Disable drive list combo box while we're reading.
     //
-    HWND hwndParentToolbar = GetChildToolbar(hwndParent);
-    {
-        HWND hwndCombo = GetLocationCombo(hwndParentToolbar);
-        if (hwndCombo)
-            EnableWindow(hwndCombo, FALSE);
-    }
+    EnableWindow(hwndDriveList, FALSE);
 
     SetWindowLongPtr(hwndTreeCtl, GWL_READLEVEL, GetWindowLongPtr(hwndTreeCtl, GWL_READLEVEL) + 1);
 
@@ -695,16 +689,13 @@ BOOL ReadDirLevel(
                 hwndTreeCtl, pParentNode, iParentNode, lfndta.fd.cFileName, &pNode,
                 IsCasePreservedDrive(DRIVEID(szPath)), bPartialSort, lfndta.fd.dwFileAttributes);
 
-            {
-                HWND hwndParentStatus = GetChildStatusBar(hwndParent);
-                if (hwndParentStatus && ((cNodes % READDIRLEVEL_UPDATE) == 0)) {
-                    // make sure we are the active window before we
-                    // update the status bar
+            if (hwndStatus && ((cNodes % READDIRLEVEL_UPDATE) == 0)) {
+                // make sure we are the active window before we
+                // update the status bar
 
-                    if (hwndParent == (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L)) {
-                        SetStatusText(0, SST_FORMAT, szDirsRead, cNodes);
-                        UpdateWindow(hwndParentStatus);
-                    }
+                if (hwndParent == (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L)) {
+                    SetStatusText(0, SST_FORMAT, szDirsRead, cNodes);
+                    UpdateWindow(hwndStatus);
                 }
             }
 
@@ -795,17 +786,13 @@ DONE:
     iReadLevel--;  // global for menu code
 
     // Make the volume name real.
-    if (uLevel == 0 && hwndParentToolbar)
-        InvalidateRect(hwndParentToolbar, NULL, TRUE);
+    if (uLevel == 0)
+        InvalidateRect(hwndDriveBar, NULL, TRUE);
 
     //
     //  Re-enable the drive list combo box.
     //
-    {
-        HWND hwndCombo = GetLocationCombo(hwndParentToolbar);
-        if (hwndCombo)
-            EnableWindow(hwndCombo, TRUE);
-    }
+    EnableWindow(hwndDriveList, TRUE);
 
     return (bResult);
 }
@@ -1201,16 +1188,10 @@ BOOL RectTreeItem(HWND hwndLB, int iItem, BOOL bFocusOn) {
     SIZE size;
 
     if (iItem == -1) {
-    EmptyStatusAndReturn: {
-        // Resolve the status bar from the tree control's MDI parent
-        HWND hwndMdiParent = GetParent(GetParent(hwndLB));  // listbox -> tree control -> MDI child
-        HWND hwndItemStatus = GetChildStatusBar(hwndMdiParent);
-        if (hwndItemStatus) {
-            SendMessage(hwndItemStatus, SB_SETTEXT, SBT_NOBORDERS | 255, (LPARAM)kEmptyString);
-            UpdateWindow(hwndItemStatus);
-        }
+    EmptyStatusAndReturn:
+        SendMessage(hwndStatus, SB_SETTEXT, SBT_NOBORDERS | 255, (LPARAM)kEmptyString);
+        UpdateWindow(hwndStatus);
         return FALSE;
-    }
     }
 
     // Are we over ourselves? (i.e. a selected item in the source listbox)
@@ -1258,12 +1239,7 @@ BOOL RectTreeItem(HWND hwndLB, int iItem, BOOL bFocusOn) {
         SetStatusText(
             SBT_NOBORDERS | 255, SST_FORMAT | SST_RESOURCE, (LPCWSTR)(DWORD_PTR)GetDragStatusText(iShowSourceBitmaps),
             szPath);
-        {
-            HWND hwndMdiParent = GetParent(GetParent(hwndLB));
-            HWND hwndDragStatus = GetChildStatusBar(hwndMdiParent);
-            if (hwndDragStatus)
-                UpdateWindow(hwndDragStatus);
-        }
+        UpdateWindow(hwndStatus);
 
         if (bSel) {
             wColor = COLOR_WINDOW;
@@ -1947,11 +1923,8 @@ TreeControlWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                 if (hwndDir = HasDirWindow(hwndParent))
                     SetFocus(hwndDir);
-                else {
-                    HWND hwndParentToolbar = GetChildToolbar(hwndParent);
-                    if (hwndParentToolbar)
-                        SetFocus(hwndParentToolbar);
-                }
+                else
+                    SetFocus(hwndDriveBar);
             }
             {
                 IDropTarget* pDropTarget;
@@ -2307,8 +2280,6 @@ TreeControlWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     TypeAheadString('\0', NULL);
                     GetTreeWindows(hwndParent, NULL, &hwndDir);
 
-                    HWND hwndParentToolbar = GetChildToolbar(hwndParent);
-
                     //
                     // Check to see if we can change to the directory window
                     //
@@ -2327,8 +2298,8 @@ TreeControlWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                     }
 
                     if (GetKeyState(VK_SHIFT) < 0) {
-                        if (bDriveBar && hwndParentToolbar) {
-                            hwndSet = hwndParentToolbar;
+                        if (bDriveBar) {
+                            hwndSet = hwndDriveBar;
                         } else {
                             if (bDir) {
                                 hwndSet = hwndDir;
@@ -2338,7 +2309,7 @@ TreeControlWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
                             }
                         }
                     } else {
-                        hwndTemp = (!bDriveBar || !hwndParentToolbar) ? hwnd : hwndParentToolbar;
+                        hwndTemp = (!bDriveBar) ? hwnd : hwndDriveBar;
 
                         hwndSet = bDir ? hwndDir : hwndTemp;
                         hwndNext = hwndTemp;
@@ -2370,11 +2341,8 @@ TreeControlWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
                 default:
                     // Select disc by pressing CTRL + ALT + letter
-                    if ((GetKeyState(VK_CONTROL) < 0) && (GetKeyState(VK_MENU) < 0)) {
-                        HWND hwndParentToolbar = GetChildToolbar(hwndParent);
-                        if (hwndParentToolbar)
-                            return SendMessage(hwndParentToolbar, uMsg, wParam, lParam);
-                    }
+                    if ((GetKeyState(VK_CONTROL) < 0) && (GetKeyState(VK_MENU) < 0))
+                        return SendMessage(hwndDriveBar, uMsg, wParam, lParam);
 
                     return -1L;
             }

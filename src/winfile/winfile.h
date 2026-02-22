@@ -300,9 +300,7 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam
 
 #define GWL_LASTFOCUS (9 * sizeof(LONG_PTR))
 
-#define GWL_DIRPATH (10 * sizeof(LONG_PTR))       // LPWSTR to full directory path (allocated)
-#define GWL_HWND_TOOLBAR (11 * sizeof(LONG_PTR))  // HWND of per-child toolbar (tree windows only)
-#define GWL_HWND_STATUS (12 * sizeof(LONG_PTR))   // HWND of per-child status bar (tree windows only)
+#define GWL_DIRPATH (10 * sizeof(LONG_PTR))  // LPWSTR to full directory path (allocated)
 
 // szDrivesClass...
 
@@ -715,6 +713,8 @@ Extern HWND hwndMDIClient EQ(NULL);
 Extern HWND hwndSearch EQ(NULL);
 Extern HWND hwndDragging EQ(NULL);
 
+Extern HWND hwndDriveBar EQ(NULL);
+Extern HWND hwndDriveList EQ(NULL);
 Extern HWND hwndDropChild EQ(NULL);  // for tree windows forwarding to drivebar
 Extern HWND hwndFormatSelect EQ(NULL);
 
@@ -738,6 +738,8 @@ Extern DWORD dwNewSort EQ(IDD_NAME);
 
 Extern LARGE_INTEGER qFreeSpace;
 Extern LARGE_INTEGER qTotalSpace;
+
+Extern HWND hwndStatus EQ(NULL);
 
 Extern int iNumExtensions EQ(0);
 Extern EXTENSION extensions[MAX_EXTENSIONS];

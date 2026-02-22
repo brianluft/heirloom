@@ -1004,7 +1004,13 @@ INT_PTR CALLBACK SearchProgDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
                 // don't do this if drive doesn't exist
 
                 if (i != cDrives) {
+                    SetWindowLongPtr(hwndDriveBar, GWL_CURDRIVEIND, i);
+                    SetWindowLongPtr(hwndDriveBar, GWL_CURDRIVEFOCUS, i);
+
                     UpdateStatus(hwndSearch);
+
+                    InvalidateRect(hwndDriveBar, NULL, TRUE);
+                    UpdateWindow(hwndDriveBar);
                 }
             } else {
                 //

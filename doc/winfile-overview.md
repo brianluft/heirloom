@@ -10,29 +10,27 @@ Unlike progman's clean separation of UI and business logic, winfile uses a tradi
 
 1. **Presentation and Logic Mixed** - UI components directly handle business logic
 2. **Direct Win32 API Usage** - Minimal abstraction over operating system APIs
-3. **Per-Window State** - Toolbar and status bar state stored in per-window extra bytes and per-instance structs, with helper functions for resolution
+3. **Global State Management** - Extensive use of global variables for shared state
 4. **Traditional C Programming** - Procedural programming with structs and function pointers
 
 ### Window Structure Hierarchy
 ```
 Frame Window (FrameWndProc) - hwndFrame
+├── Toolbar (DrivesWndProc) - hwndDriveBar
+│   ├── Location ComboBoxEx (WC_COMBOBOXEX) - hwndDriveList
+│   └── Toolbar Control (TOOLBARCLASSNAME) - view/sort/new window buttons
 ├── MDI Client - hwndMDIClient
 │   ├── Tree Window (TreeWndProc) - Multiple instances
-│   │   ├── Toolbar (DrivesWndProc) - per-child, stored in GWL_HWND_TOOLBAR
-│   │   │   ├── Location ComboBoxEx (WC_COMBOBOXEX)
-│   │   │   └── Toolbar Control (TOOLBARCLASSNAME) - view/sort/new window buttons
 │   │   ├── Tree Control (TreeControlWndProc) - hwndTree
 │   │   │   └── Tree Listbox (IDCW_TREELISTBOX)
-│   │   ├── Directory Listbox (DirWndProc) - hwndDir
-│   │   │   └── File Listbox (IDCW_LISTBOX)
-│   │   └── Status Bar (STATUSCLASSNAME) - per-child, stored in GWL_HWND_STATUS
+│   │   └── Directory Listbox (DirWndProc) - hwndDir
+│   │       └── File Listbox (IDCW_LISTBOX)
 │   ├── Search Window (SearchWndProc) - hwndSearch
 │   │   └── Results Listbox (IDCW_LISTBOX)
 │   └── Minimized Window Bar (WinfileMinimizedWindowList) - bottom of MDI client
 │       └── ListView (icon view showing minimized window labels and icons)
+└── Status Bar - hwndStatus
 ```
-
-Each tree window owns its own toolbar and status bar as direct child windows. Search windows have neither a toolbar nor a status bar. The frame window contains only the menu bar and the MDI client area. This design avoids focus conflicts between the frame-level accelerator table and controls in the toolbar (e.g., Ctrl+C/X/V in the location combobox).
 
 ## Core Components
 
@@ -43,14 +41,12 @@ Each tree window owns its own toolbar and status bar as direct child windows. Se
 - **Window Initialization** - Application startup and MDI setup
 - **Menu Management** - Dynamic menu state updates and command routing
 - **Global Message Handling** - File system change notifications and cross-window coordination
-- **`ResizeControls()`** - Sizes the MDI client to fill the frame (frame has no toolbar or status bar)
+- **Status Bar Updates** - Centralized status message management
 
 #### MDI Child Windows (`wftree.cpp`)
 - **`TreeWndProc`** - MDI container for tree/directory views
-- **Per-Child Toolbar and Status Bar** - Each tree window creates its own toolbar (`DrivesWndProc`) and status bar in `WM_CREATE`, stored in per-window extra bytes (`GWL_HWND_TOOLBAR`, `GWL_HWND_STATUS`). Cleaned up in `WM_DESTROY`.
-- **`ResizeWindows()`** - Positions the toolbar at the top, status bar at the bottom, and tree/directory panes in between
 - **Split Management** - Dynamic resizing between tree and directory panes
-- **Focus Coordination** - Managing focus between tree, directory, and toolbar components
+- **Focus Coordination** - Managing focus between tree and directory components
 - **Window State Persistence** - Saving and restoring window positions and split ratios
 
 #### Minimized Window Bar (`wfminbar.cpp`)
@@ -97,26 +93,16 @@ Each tree window owns its own toolbar and status bar as direct child windows. Se
 
 ### Drive and Hardware Layer
 
-#### Drive Management and Toolbar (`wfdrives.cpp`, `wfdrives.h`)
-- **Per-Child Toolbar Instances** - Each tree window has its own toolbar (`DrivesWndProc`). Per-instance state is stored in a `ChildToolbarData` struct (allocated on the heap, stored in `GWLP_USERDATA`), containing:
-  - `hwndToolbarCtrl` - The Win32 toolbar control
-  - `hwndLocationCombo` - The ComboBoxEx for drive/path selection
-  - `himlDriveIcons` - Per-instance image list for drive icons
-- **Toolbar Contents**:
+#### Drive Management and Toolbar (`wfdrives.cpp`)
+- **Toolbar** - Standard Win32 toolbar replacing the old drive bar, containing:
   - **Location Combobox** (COMBOBOXEX) - Drive letter dropdown with drive type icons; edit field accepts arbitrary paths with Enter to navigate
-  - **View Radio Group** - List/Details toggle buttons (TBSTYLE_CHECKGROUP) synced with owning MDI child's view mode
-  - **Sort Radio Group** - Name/Type/Size/Date Newest/Date Oldest toggle buttons synced with owning MDI child's sort mode
+  - **View Radio Group** - List/Details toggle buttons (TBSTYLE_CHECKGROUP) synced with active MDI child's view mode
+  - **Sort Radio Group** - Name/Type/Size/Date Newest/Date Oldest toggle buttons synced with active MDI child's sort mode
   - **New Window Button** - Opens a new MDI child window
-- **Helper Functions** (`wfdrives.h`):
-  - `GetChildToolbar(hwndMdiChild)` - Returns the toolbar HWND for a tree window (from `GWL_HWND_TOOLBAR`)
-  - `GetChildStatusBar(hwndMdiChild)` - Returns the status bar HWND for a tree window (from `GWL_HWND_STATUS`)
-  - `GetToolbarData(hwndToolbar)` - Returns the `ChildToolbarData*` from `GWLP_USERDATA`
-  - `GetLocationCombo(hwndToolbar)` - Returns the location ComboBoxEx HWND
 - **Drive Detection** - Dynamic drive enumeration and type identification
 - **Network Drive Support** - UNC path handling and connection management
 - **Removable Media** - Floppy disk and CD-ROM handling with validation
-- **Toolbar State Sync** - `UpdateToolbarState()` syncs button/combobox state with the active MDI child; `RefreshToolbarDriveList()` enumerates all MDI children to rebuild every toolbar's drive combobox when drives change
-- **`ConfigureStatusBarParts()`** - Sets up the status bar part widths, called during tree window creation
+- **Toolbar State Sync** - `UpdateToolbarState()` syncs button/combobox state with the active MDI child; `RefreshToolbarDriveList()` rebuilds the drive combobox when drives change
 
 #### Hardware Integration (`wfutil.cpp`)
 - **Path Utilities** - Comprehensive path manipulation and validation
@@ -186,7 +172,7 @@ Each tree window owns its own toolbar and status bar as direct child windows. Se
 - **Multiple Windows** - MDI interface supporting up to 27 concurrent windows
 - **Window Minimization** - Minimized MDI children appear as icons in a bottom bar (simulating Windows 3.11 behavior), double-click to restore
 - **Customizable Views** - Name-only, detailed, with configurable columns and sorting; all files are always shown (no file type filtering)
-- **Per-Window Toolbar** - Each tree window has its own toolbar with location combobox, view/sort radio buttons, and new window button
+- **Toolbar** - Standard toolbar with location combobox, view/sort radio buttons, and new window button
 - **Search Interface** - Integrated search with real-time results and progress
 
 ### File System Integration
@@ -211,7 +197,7 @@ Each tree window owns its own toolbar and status bar as direct child windows. Se
 ### Programming Model
 - **Win32 API Direct Usage** - Minimal wrapper layers around Windows APIs
 - **Message-Driven Architecture** - Heavy reliance on Windows message passing
-- **Per-Window State Management** - Toolbar/status bar HWNDs stored in per-window extra bytes; per-toolbar data in heap-allocated `ChildToolbarData` structs accessed via `GWLP_USERDATA`
+- **Global State Management** - Extensive use of global variables for coordination
 - **Manual Memory Management** - LocalAlloc/LocalFree for dynamic memory
 
 ### Threading Model

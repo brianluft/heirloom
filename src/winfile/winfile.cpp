@@ -15,7 +15,6 @@
 #include "wfchgnot.h"
 #include "wfcomman.h"
 #include "wfutil.h"
-#include "wfdrives.h"
 #include "wfdirrd.h"
 #include "wfinit.h"
 #include "wfsearch.h"
@@ -30,17 +29,17 @@
 // Overall Window structure
 //
 // Frame Window (FrameWndProc(), global hwndFrame)
+// Drives bar (DrivesWndproc(), global hwndDriveBar)
 // MDI Client (n/a, global hwndMDIClient)
 //    Tree window (TreeWndProc(), <hwndActive> looked up)
-//       Per-child toolbar (DrivesWndProc(), GWL_HWND_TOOLBAR)
 //       Tree control on left (TreeControlWndProc(), hwndTree = HasTreeWindow(hwndActive))
 //          Listbox (n/a, GetDlgItem(hwndTree, IDCW_TREELISTBOX))
 //       Directory content list on right (DirWndProc(), hwndDir = HasDirWindow(hwndActive), GWL_LISTPARMS -> parent
 //       hwndActive)
 //          Listbox (n/a, GetDlgItem(hwndDir, IDCW_LISTBOX))
-//       Per-child status bar (n/a, GWL_HWND_STATUS)
 //    Search results window (SearchWndProc(), global hwndSearch, GWL_LISTPARMS -> hwndSearch)
 //       Listbox (n/a, GetDlgItem(hwndDir, IDCW_LISTBOX))
+// Status window (n/a, hwndStatus)
 //
 
 //
@@ -48,8 +47,6 @@
 //
 BOOL EnablePropertiesMenu(HWND hwnd, LPWSTR pszSel);
 std::wstring EscapeMenuItemText(const std::wstring& text);
-
-static HWND hwndSizeGrip;
 
 int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pszCmdLineA, int nCmdShow) {
     MSG msg;
@@ -91,17 +88,44 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR pszCmdLineA, in
 }
 
 void ResizeControls() {
-    RECT rc;
+    static int nViews[] = {
+        1, 0,                // placeholder for the main menu handle
+        1, IDC_STATUS, 0, 0  // signify the end of the list
+    };
 
+    RECT rc;
+    int dyDriveBar;
+
+    //
+    // These controls move and resize themselves
+    //
+    if (hwndStatus)
+        SendMessage(hwndStatus, WM_SIZE, 0, 0L);
+
+    //
+    // This stuff is nec since bRepaint in MoveWindow seems
+    // broken.  By invalidating, we don't scroll bad stuff.
+    //
+    if (bDriveBar) {
+        InvalidateRect(hwndDriveBar, NULL, FALSE);
+    }
     InvalidateRect(hwndMDIClient, NULL, FALSE);
 
-    GetClientRect(hwndFrame, &rc);
+    GetEffectiveClientRect(hwndFrame, &rc, nViews);
+    rc.right -= rc.left;
 
-    int cxGrip = GetSystemMetrics(SM_CXVSCROLL);
-    int cyGrip = GetSystemMetrics(SM_CYHSCROLL);
+    UINT dpi = GetDpiForWindow(hwndFrame);
+    dyDriveBar = ScaleValueForDpi(30, dpi) + 2 * dyBorder;
 
-    MoveWindow(hwndMDIClient, 0, 0, rc.right, rc.bottom, TRUE);
-    MoveWindow(hwndSizeGrip, rc.right - cxGrip, rc.bottom - cyGrip, cxGrip, cyGrip, TRUE);
+    rc.right += 2 * dyBorder;
+
+    MoveWindow(hwndDriveBar, rc.left - dyBorder, rc.top - dyBorder, rc.right, dyDriveBar, FALSE);
+
+    if (bDriveBar)
+        rc.top += dyDriveBar - dyBorder;
+
+    MoveWindow(
+        hwndMDIClient, rc.left - dyBorder, rc.top - dyBorder, rc.right, rc.bottom - rc.top + 2 * dyBorder - 1, TRUE);
 }
 
 BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) {
@@ -513,8 +537,8 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             GetClientRect(hwndFrame, &rc);
 
             hwndMDIClient = CreateWindow(
-                L"MDIClient", NULL, WS_CHILD | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL, 0, 0, rc.right, rc.bottom,
-                hwnd, (HMENU)1, hAppInstance, (LPVOID)&ccs);
+                L"MDIClient", NULL, WS_CHILD | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL | WS_BORDER, 0, 0, rc.right,
+                rc.bottom, hwnd, (HMENU)1, hAppInstance, (LPVOID)&ccs);
 
             if (!hwndMDIClient) {
                 return -1L;
@@ -522,11 +546,37 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
             InitMinimizedWindowBar(hAppInstance, hwndMDIClient);
 
-            // Sizing gripper in the scrollbar intersection corner
-            hwndSizeGrip = CreateWindow(
-                L"SCROLLBAR", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SBS_SIZEGRIP, 0, 0, 0, 0, hwnd, NULL,
-                hAppInstance, NULL);
+            // make new drives window
 
+            hwndDriveBar = CreateWindow(
+                kDrivesClass, NULL,
+                bDriveBar ? WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS
+                          : WS_CHILD | WS_BORDER | WS_CLIPSIBLINGS,
+                0, 0, 0, 0, hwndFrame, 0, hAppInstance, NULL);
+
+            if (!hwndDriveBar)
+                return -1L;
+
+            hwndStatus = CreateStatusWindow(
+                bStatusBar ? WS_CHILD | WS_BORDER | WS_VISIBLE | WS_CLIPSIBLINGS
+                           : WS_CHILD | WS_BORDER | WS_CLIPSIBLINGS,
+                kEmptyString, hwndFrame, IDC_STATUS);
+
+            if (hwndStatus) {
+                HDC hDC;
+                int nParts[3];
+                int nInch;
+
+                hDC = GetDC(NULL);
+                nInch = GetDeviceCaps(hDC, LOGPIXELSX);
+                ReleaseDC(NULL, hDC);
+
+                nParts[0] = nInch * 9 / 4 + (nInch * 7 / 8);
+                nParts[1] = nParts[0] + nInch * 5 / 2 + nInch * 7 / 8;
+                nParts[2] = -1;
+
+                SendMessage(hwndStatus, SB_SETPARTS, 3, (LPARAM)(LPINT)nParts);
+            }
             break;
         }
 
@@ -562,6 +612,7 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             DestroyMinimizedWindowBar();
             hwndFrame = NULL;
             PostQuitMessage(0);
+            DestroyWindow(hwndDriveBar);
             break;
 
         case WM_SIZE:
@@ -663,9 +714,12 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
         break;
 
-        case WM_SYSCOMMAND:
+        case WM_SYSCOMMAND: {
+            HWND hwndFocus = GetFocus();
+            if (hwndDriveList && (hwndFocus == hwndDriveList || IsChild(hwndDriveList, hwndFocus)))
+                SendMessage(hwndDriveList, CB_SHOWDROPDOWN, FALSE, 0L);
             return DefFrameProc(hwnd, hwndMDIClient, wMsg, wParam, lParam);
-            break;
+        } break;
 
         case WM_ENDSESSION:
 

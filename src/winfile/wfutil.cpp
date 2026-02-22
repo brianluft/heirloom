@@ -120,9 +120,7 @@ void CDECL SetStatusText(int nPane, UINT nFlags, LPCWSTR szFormat, ...) {
 
     va_list vaArgs;
 
-    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
-    HWND hwndActiveStatus = GetChildStatusBar(hwndActive);
-    if (!hwndActiveStatus)
+    if (!hwndStatus)
         return;
 
     if (nFlags & SST_RESOURCE) {
@@ -141,7 +139,7 @@ void CDECL SetStatusText(int nPane, UINT nFlags, LPCWSTR szFormat, ...) {
         szFormat = szTemp;
     }
 
-    SendMessage(hwndActiveStatus, SB_SETTEXT, nPane, (LPARAM)szFormat);
+    SendMessage(hwndStatus, SB_SETTEXT, nPane, (LPARAM)szFormat);
 }
 
 // drive   zero based drive number (0 = A, 1 = B)

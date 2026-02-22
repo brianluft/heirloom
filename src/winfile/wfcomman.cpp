@@ -463,8 +463,8 @@ HWND CreateDirWindow(LPWSTR szPath, BOOL bReplaceOpen, HWND hwndActive) {
         drive = DRIVEID(szPath);
         for (i = 0; i < cDrives; i++) {
             if (drive == rgiDrive[i]) {
-                HWND hwndCombo = GetLocationCombo(GetChildToolbar(hwndActive));
-                if (hwndCombo && i != SendMessage(hwndCombo, CB_GETCURSEL, i, 0L)) {
+                // if not already selected, do so now
+                if (i != SendMessage(hwndDriveList, CB_GETCURSEL, i, 0L)) {
                     bDriveChanged = TRUE;
                 }
                 break;
@@ -494,11 +494,8 @@ HWND CreateDirWindow(LPWSTR szPath, BOOL bReplaceOpen, HWND hwndActive) {
         //
         UpdateStatus(hwndActive);
         if (bDriveChanged) {
-            HWND hwndChildToolbar = GetChildToolbar(hwndActive);
-            if (hwndChildToolbar) {
-                InvalidateRect(hwndChildToolbar, NULL, TRUE);
-                UpdateWindow(hwndChildToolbar);
-            }
+            InvalidateRect(hwndDriveBar, NULL, TRUE);
+            UpdateWindow(hwndDriveBar);
         }
 
         return hwndActive;
@@ -554,16 +551,13 @@ void OpenOrEditSelection(HWND hwndActive, BOOL fEdit) {
     else
         hwndFocus = NULL;
 
-    {
-        HWND hwndActiveToolbar = GetChildToolbar(hwndActive);
-        if (hwndActiveToolbar && hwndFocus == hwndActiveToolbar) {
-            //
-            // open a drive by sending a <CR>
-            //
-            SendMessage(hwndActiveToolbar, WM_KEYDOWN, VK_RETURN, 0L);
+    if (hwndDriveBar && hwndFocus == hwndDriveBar) {
+        //
+        // open a drive by sending a <CR>
+        //
+        SendMessage(hwndDriveBar, WM_KEYDOWN, VK_RETURN, 0L);
 
-            goto OpenExit;
-        }
+        goto OpenExit;
     }
 
     //
@@ -662,6 +656,9 @@ void MDIClientSizeChange(HWND hwndActive, int iFlags) {
 
     InvalidateRect(hwndMDIClient, NULL, FALSE);
 
+    if (bDriveBar && (iFlags & DRIVEBAR_FLAG))
+        InvalidateRect(hwndDriveBar, NULL, TRUE);
+
     UpdateWindow(hwndFrame);
 }
 
@@ -727,20 +724,6 @@ BOOL GetBashExePath(LPWSTR szBashPath, UINT bufSize) {
 
     return FALSE;
 }
-// Show or hide a per-child control in all tree MDI children and trigger a resize.
-static void ShowHideInAllTreeChildren(HWND (*pfnGetControl)(HWND), BOOL bShow) {
-    for (HWND hwndT = GetWindow(hwndMDIClient, GW_CHILD); hwndT; hwndT = GetWindow(hwndT, GW_HWNDNEXT)) {
-        if (!GetWindow(hwndT, GW_OWNER) && hwndT != hwndSearch) {
-            HWND hwndCtrl = pfnGetControl(hwndT);
-            if (hwndCtrl)
-                ShowWindow(hwndCtrl, bShow ? SW_SHOW : SW_HIDE);
-            RECT rcChild;
-            GetClientRect(hwndT, &rcChild);
-            SendMessage(hwndT, WM_SIZE, SIZENOMDICRAP, MAKELONG(rcChild.right, rcChild.bottom));
-        }
-    }
-}
-
 /*--------------------------------------------------------------------------*/
 /*                                                                          */
 /*  AppCommandProc() -                                                      */
@@ -816,10 +799,9 @@ BOOL AppCommandProc(DWORD id) {
 
         case IDM_OPEN: {
             HWND hwndFocus = GetFocus();
-            HWND hwndActiveCombo = GetLocationCombo(GetChildToolbar(hwndActive));
-            if (hwndActiveCombo && (hwndFocus == hwndActiveCombo || IsChild(hwndActiveCombo, hwndFocus))) {
+            if (hwndDriveList && (hwndFocus == hwndDriveList || IsChild(hwndDriveList, hwndFocus))) {
                 // User pressed Enter in location combo - navigate to typed path
-                HWND hwndEdit = (HWND)SendMessage(hwndActiveCombo, CBEM_GETEDITCONTROL, 0, 0);
+                HWND hwndEdit = (HWND)SendMessage(hwndDriveList, CBEM_GETEDITCONTROL, 0, 0);
                 if (hwndEdit) {
                     WCHAR szPath[MAXPATHLEN];
                     GetWindowTextW(hwndEdit, szPath, COUNTOF(szPath));
@@ -1877,7 +1859,8 @@ BOOL AppCommandProc(DWORD id) {
             bTemp = bStatusBar = !bStatusBar;
             WritePrivateProfileBool(kStatusBar, bStatusBar);
 
-            ShowHideInAllTreeChildren(GetChildStatusBar, bStatusBar);
+            ShowWindow(hwndStatus, bStatusBar ? SW_SHOW : SW_HIDE);
+            MDIClientSizeChange(hwndActive, DRIVEBAR_FLAG);
 
             goto CHECK_OPTION;
             break;
@@ -1886,7 +1869,8 @@ BOOL AppCommandProc(DWORD id) {
             bTemp = bDriveBar = !bDriveBar;
             WritePrivateProfileBool(kDriveBar, bDriveBar);
 
-            ShowHideInAllTreeChildren(GetChildToolbar, bDriveBar);
+            ShowWindow(hwndDriveBar, bDriveBar ? SW_SHOW : SW_HIDE);
+            MDIClientSizeChange(hwndActive, DRIVEBAR_FLAG);
 
             goto CHECK_OPTION;
             break;
@@ -2129,8 +2113,5 @@ ReadMoveStatus() {
 }
 
 void UpdateMoveStatus(DWORD dwEffect) {
-    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
-    HWND hwndActiveStatus = GetChildStatusBar(hwndActive);
-    if (hwndActiveStatus)
-        SendMessage(hwndActiveStatus, SB_SETTEXT, 2, (LPARAM)(dwEffect == DROPEFFECT_MOVE ? L"MOVE PENDING" : NULL));
+    SendMessage(hwndStatus, SB_SETTEXT, 2, (LPARAM)(dwEffect == DROPEFFECT_MOVE ? L"MOVE PENDING" : NULL));
 }
