@@ -2,7 +2,7 @@
 
 <h3 align="center">Lightly modernized classics for Windows</h3>
 
-<p align="center"><img src="screenshot.png" width=661></p>
+<p align="center"><img src="screenshot.png" width=657></p>
 
 ### <img src="progman.png" width=24 align="top"> Heirloom Program Manager
 An alternative to the Start menu for launching applications. This is a reimplementation of [Program Manager](https://en.wikipedia.org/wiki/Program_Manager).
