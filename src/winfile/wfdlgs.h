@@ -192,6 +192,7 @@
 void UpdateConnections(BOOL bUpdateDriveList);
 
 void ActivateCommonContextMenu(HWND hwnd, HWND hwndLB, LPARAM lParam);
+void ActivateLocationIconContextMenu(HWND hwndIcon, LPARAM lParam);
 void KillQuoteTrailSpace(LPWSTR szFile);
 void SaveWindows(HWND hwndMain);
 void NewFont();

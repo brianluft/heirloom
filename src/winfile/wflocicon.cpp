@@ -6,6 +6,7 @@
 #include "wfcopy.h"
 #include "wfutil.h"
 #include "wfdpi.h"
+#include "wfdlgs.h"
 #include "stringconstants.h"
 #include <commctrl.h>
 #include <ole2.h>
@@ -382,6 +383,13 @@ LRESULT CALLBACK LocationIconWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
                 pState->tracking = FALSE;
             if (uMsg == WM_LBUTTONUP)
                 ReleaseCapture();
+            return 0;
+        }
+
+        case WM_CONTEXTMENU: {
+            LocationIconState* pState = (LocationIconState*)GetWindowLongPtr(hwnd, 0);
+            if (pState && pState->currentPath[0])
+                ActivateLocationIconContextMenu(hwnd, lParam);
             return 0;
         }
 

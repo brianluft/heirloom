@@ -96,7 +96,7 @@ Frame Window (FrameWndProc) - hwndFrame
 
 #### Drive Management and Toolbar (`wfdrives.cpp`)
 - **Toolbar** - Standard Win32 toolbar replacing the old drive bar, containing:
-  - **Location Icon** (`wflocicon.cpp`) - Draggable icon to the left of the combobox showing the current location (drive icon for root paths, open folder for non-root). Supports OLE drag-and-drop in both directions: drag from the icon to export the current directory path, drop onto the icon to copy/move files into the current directory. Shows a hand cursor on hover and has a tooltip. Uses its own `LocationIconDropTarget` (IDropTarget implementation) for drop handling.
+  - **Location Icon** (`wflocicon.cpp`) - Draggable icon to the left of the combobox showing the current location (drive icon for root paths, open folder for non-root). Supports OLE drag-and-drop in both directions: drag from the icon to export the current directory path, drop onto the icon to copy/move files into the current directory. Right-click shows the same context menu as right-clicking a folder in the tree view, with file-specific items grayed out. Shows a hand cursor on hover and has a tooltip. Uses its own `LocationIconDropTarget` (IDropTarget implementation) for drop handling.
   - **Location Combobox** (COMBOBOXEX) - Drive letter dropdown; edit field accepts arbitrary paths with Enter to navigate
   - **View Radio Group** - List/Details toggle buttons (TBSTYLE_CHECKGROUP) synced with active MDI child's view mode
   - **Sort Radio Group** - Name/Type/Size/Date Newest/Date Oldest toggle buttons synced with active MDI child's sort mode

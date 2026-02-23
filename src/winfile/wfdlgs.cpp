@@ -769,3 +769,62 @@ void ActivateCommonContextMenu(HWND hwnd, HWND hwndLB, LPARAM lParam) {
 
     DestroyMenu(hMenu);
 }
+
+void ActivateLocationIconContextMenu(HWND hwndIcon, LPARAM lParam) {
+    // Redirect focus to the tree listbox of the active MDI child so that
+    // GetSelection() (used by commands like IDM_STARTCMDSHELL, IDM_ATTRIBS,
+    // etc.) resolves to the current directory rather than a file selection.
+    // We must target the tree listbox (not the tree controller) because
+    // GWL_LASTFOCUS is updated by LBN_SETFOCUS, which only fires on the listbox.
+    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+    if (hwndActive && hwndActive != hwndSearch) {
+        HWND hwndTree = HasTreeWindow(hwndActive);
+        if (hwndTree) {
+            HWND hwndTreeLB = GetDlgItem(hwndTree, IDCW_TREELISTBOX);
+            if (hwndTreeLB)
+                SetFocus(hwndTreeLB);
+        }
+    }
+
+    HMENU hMenuRoot = LoadMenu(hAppInstance, L"CTXMENU");
+    HMENU hMenu = GetSubMenu(hMenuRoot, 0);
+
+    SetMenuDefaultItem(hMenu, IDM_OPEN, FALSE);
+
+    auto gitBashPath = GetGitBashPath();
+    EnableMenuItem(hMenu, IDM_STARTBASHSHELL, MF_BYCOMMAND | (gitBashPath.has_value() ? MF_ENABLED : MF_GRAYED));
+
+    // Disable file-specific operations that don't apply to the current directory
+    const UINT uGray = MF_BYCOMMAND | MF_GRAYED;
+    EnableMenuItem(hMenu, IDM_EDIT, uGray);
+    EnableMenuItem(hMenu, IDM_RENAME, uGray);
+    EnableMenuItem(hMenu, IDM_DELETE, uGray);
+    EnableMenuItem(hMenu, IDM_MOVE, uGray);
+    EnableMenuItem(hMenu, IDM_COPY, uGray);
+    EnableMenuItem(hMenu, IDM_SYMLINK, uGray);
+    EnableMenuItem(hMenu, IDM_HARDLINK, uGray);
+    EnableMenuItem(hMenu, IDM_CUTTOCLIPBOARD, uGray);
+    EnableMenuItem(hMenu, IDM_ZIPARCHIVE_ADDTOZIP, uGray);
+    EnableMenuItem(hMenu, IDM_ZIPARCHIVE_ADDTO, uGray);
+    EnableMenuItem(hMenu, IDM_ZIPARCHIVE_EXTRACTHERE, uGray);
+    EnableMenuItem(hMenu, IDM_ZIPARCHIVE_EXTRACTTONEWFOLDER, uGray);
+    EnableMenuItem(hMenu, IDM_ZIPARCHIVE_EXTRACTTO, uGray);
+
+    POINT pt;
+    if (lParam == -1) {
+        // Keyboard invocation: position below the icon
+        RECT rc;
+        GetWindowRect(hwndIcon, &rc);
+        pt.x = rc.left;
+        pt.y = rc.bottom;
+    } else {
+        POINTSTOPOINT(pt, lParam);
+    }
+
+    DWORD cmd = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hwndFrame, NULL);
+    if (cmd != 0) {
+        PostMessage(hwndFrame, WM_COMMAND, GET_WM_COMMAND_MPS(cmd, 0, 0));
+    }
+
+    DestroyMenu(hMenuRoot);
+}
