@@ -53,9 +53,9 @@ IDR_PNG_TOOLBAR_07 RCDATA "images\\toolbar_new_window.png"
 
 
 APPICON     ICON   PRELOAD "images\\app.ico"
-TREEICON    ICON   PRELOAD wftree.ico
-DIRICON     ICON   PRELOAD wfdir.ico
-TREEDIRICON ICON   PRELOAD wftrdir.ico
+TREEICON    ICON   PRELOAD "images\\wftree.ico"
+DIRICON     ICON   PRELOAD "images\\wfdir.ico"
+TREEDIRICON ICON   PRELOAD "images\\wftrdir.ico"
 
 SPLITCURSOR     CURSOR PRELOAD split.cur
 SINGLEMOVECURSOR    CURSOR smove.cur
