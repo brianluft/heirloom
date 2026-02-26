@@ -533,6 +533,11 @@ SuperDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
             SendDlgItemMessage(hDlg, iCtrl, EM_LIMITTEXT, COUNTOF(szTo) - 1, 0L);
             LocalFree((HANDLE)p);
+
+            if (dwSuperDlgMode == IDM_RENAME) {
+                SetFocus(GetDlgItem(hDlg, IDD_TO));
+                return FALSE;
+            }
             break;
         }
 

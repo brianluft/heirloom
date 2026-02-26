@@ -535,7 +535,9 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPar
 
             // Minimize on use
             CheckDlgButton(hDlg, IDC_MINONRUN, bMinOnRun);
-            break;
+
+            SetFocus(GetDlgItem(hDlg, IDOK));
+            return FALSE;
 
         case WM_COMMAND:
             switch (GET_WM_COMMAND_ID(wParam, lParam)) {
