@@ -483,7 +483,7 @@ SuperDlgProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
                         CheckEsc(p);
                     } else {
-                        p = GetSelection(0, NULL);
+                        p = GetSelection(8, NULL);
                     }
 
                     break;
