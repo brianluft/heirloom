@@ -848,9 +848,20 @@ void ProgramManagerWindow::sortWindowMenu(HMENU windowMenu) {
         RemoveMenu(windowMenu, i, MF_BYPOSITION);
     }
 
-    // Add items back in sorted order
-    for (const auto& item : windowItems) {
-        AppendMenuW(windowMenu, MF_STRING | item.state, item.id, item.text.c_str());
+    // Add items back in sorted order with corrected numbering
+    for (size_t i = 0; i < windowItems.size(); i++) {
+        const auto& item = windowItems[i];
+
+        // Extract the folder name (strip existing numeric prefix like "&1 ")
+        std::wstring name = item.text;
+        size_t spacePos = name.find(L' ');
+        if (spacePos != std::wstring::npos && spacePos + 1 < name.length()) {
+            name = name.substr(spacePos + 1);
+        }
+
+        // Rebuild with correct ordinal number
+        std::wstring newText = L"&" + std::to_wstring(i + 1) + L" " + name;
+        AppendMenuW(windowMenu, MF_STRING | item.state, item.id, newText.c_str());
     }
 }
 
