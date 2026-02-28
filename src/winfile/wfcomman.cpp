@@ -1160,6 +1160,8 @@ BOOL AppCommandProc(DWORD id) {
                 } else if (result == IDCANCEL) {
                     // Delete partial file on cancel
                     std::filesystem::remove(zipPath);
+                } else {
+                    SendMessage(hwndActive, WM_FSC, FSC_REFRESH, 0L);
                 }
             } catch (const libheirloom::OperationCanceledException&) {
                 // Don't show error message for cancellation
@@ -1250,6 +1252,8 @@ BOOL AppCommandProc(DWORD id) {
                 } else if (result == IDCANCEL) {
                     // Delete partial file on cancel
                     std::filesystem::remove(zipPathStr);
+                } else {
+                    SendMessage(hwndActive, WM_FSC, FSC_REFRESH, 0L);
                 }
             } catch (const libheirloom::OperationCanceledException&) {
                 // Don't show error message for cancellation
@@ -1318,6 +1322,8 @@ BOOL AppCommandProc(DWORD id) {
                             MessageBox(hwndFrame, message.c_str(), L"ZIP Archive Error", MB_OK | MB_ICONERROR);
                         }
                     }
+                } else {
+                    SendMessage(hwndActive, WM_FSC, FSC_REFRESH, 0L);
                 }
             } catch (const libheirloom::OperationCanceledException&) {
                 // Don't show error message for cancellation
@@ -1392,6 +1398,8 @@ BOOL AppCommandProc(DWORD id) {
                             MessageBox(hwndFrame, message.c_str(), L"ZIP Archive Error", MB_OK | MB_ICONERROR);
                         }
                     }
+                } else {
+                    SendMessage(hwndActive, WM_FSC, FSC_REFRESH, 0L);
                 }
             } catch (const libheirloom::OperationCanceledException&) {
                 // Don't show error message for cancellation
@@ -1483,6 +1491,8 @@ BOOL AppCommandProc(DWORD id) {
                             MessageBox(hwndFrame, message.c_str(), L"ZIP Archive Error", MB_OK | MB_ICONERROR);
                         }
                     }
+                } else {
+                    SendMessage(hwndActive, WM_FSC, FSC_REFRESH, 0L);
                 }
             } catch (const libheirloom::OperationCanceledException&) {
                 // Don't show error message for cancellation
