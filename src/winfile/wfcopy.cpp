@@ -2271,6 +2271,8 @@ WFMoveCopyDriverThread(LPVOID lpParameter) {
                     // For delete operations, send the entire directory to recycle bin
                     // instead of permanently deleting it
                     ret = MoveFileToRecycleBin(szSource);
+                    if (ret == 0)
+                        ChangeFileSystem(FSC_RMDIR, szSource, NULL);
                 } else {
                     // For move operations, use the original logic
                     //
