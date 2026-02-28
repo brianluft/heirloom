@@ -702,8 +702,6 @@ Extern HINSTANCE hAppInstance;
 Extern HBITMAP hbmBitmaps EQ(NULL);
 Extern HDC hdcMem EQ(NULL);
 
-Extern int iCurDrag EQ(0);
-
 Extern HICON hicoTree EQ(NULL);
 Extern HICON hicoTreeDir EQ(NULL);
 Extern HICON hicoDir EQ(NULL);

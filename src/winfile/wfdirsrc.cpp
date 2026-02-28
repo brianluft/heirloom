@@ -27,24 +27,6 @@ void SelectItem(HWND hwndLB, WPARAM wParam, BOOL bSel);
 void ShowItemBitmaps(HWND hwndLB, int iShow);
 int GetDragStatusText(int iOperation);
 
-HCURSOR
-GetMoveCopyCursor() {
-    switch (iShowSourceBitmaps) {
-        case DROP_COPY:
-            return LoadCursor(hAppInstance, (LPWSTR)MAKEINTRESOURCE(iCurDrag | 0b0001));
-
-        case DROP_LINK:
-            return LoadCursor(hAppInstance, (LPWSTR)MAKEINTRESOURCE((iCurDrag | 0b0100) & ~0b0001));
-
-        case DROP_HARD:
-            return LoadCursor(hAppInstance, (LPWSTR)MAKEINTRESOURCE((iCurDrag | 0b1000) & ~0b0101));
-
-        case DROP_MOVE:
-        default:
-            return LoadCursor(hAppInstance, (LPWSTR)MAKEINTRESOURCE(iCurDrag & ~0b0001));
-    }
-}
-
 /////////////////////////////////////////////////////////////////////
 //
 // Name:     MatchFile
@@ -428,12 +410,10 @@ int DSTrackPoint(HWND hwnd, HWND hwndLB, WPARAM wParam, LPARAM lParam, BOOL bSea
             // 3 = Document (default)
             iSel = 3;  // Was DOF_DOCUMENT
 
-        iCurDrag = SINGLECOPYCURSOR;
     } else {
         // Multiple files are selected - use multiple drag cursor
         // 4 = Multiple files
         iSel = 4;  // Was DOF_MULTIPLE
-        iCurDrag = MULTCOPYCURSOR;
     }
 
     // Get the list of selected things

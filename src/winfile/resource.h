@@ -177,28 +177,6 @@
 #define WINDOWSICON 203
 #define TREEDIRICON 204
 
-#define SINGLEMOVECURSOR 288  // move is even == bit 0
-#define SINGLECOPYCURSOR 289  // copy is odd == bit 0
-#define MULTMOVECURSOR 290    // multi == bit 1
-#define MULTCOPYCURSOR 291
-#define SINGLELINKCURSOR 292  // link == bit 2
-#define MULTLINKCURSOR 294
-#define SINGLEHARDCURSOR 296  // hard == bit 3
-#define MULTHARDCURSOR 298
-
-#define APPCURSOR 300
-#define DIRCURSOR 301
-#define DOCCURSOR 302
-#define FILECURSOR 304
-#define FILESCURSOR 305
-#define SPLITCURSOR 306
-
-#define APPCURSORC 310
-#define DIRCURSORC 311
-#define DOCCURSORC 312
-#define FILECURSORC 314
-#define FILESCURSORC 315
-
 #define WFACCELTABLE 400
 
 #define FRAMEMENU 500

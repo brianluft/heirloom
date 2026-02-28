@@ -865,7 +865,7 @@ BOOL InitFileManager(HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow) {
 
     // wndClass.hInstance      = hInstance;
     wndClass.hIcon = NULL;
-    wndClass.hCursor = LoadCursor(hInstance, (LPWSTR)MAKEINTRESOURCE(SPLITCURSOR));
+    wndClass.hCursor = LoadCursor(NULL, IDC_SIZEWE);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszMenuName = NULL;
 
