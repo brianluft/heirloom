@@ -397,6 +397,12 @@ static void PopulateLocationCombo() {
 // Navigate the active MDI child to an arbitrary path typed in the combobox.
 //
 void NavigateToPath(LPCWSTR pszPath) {
+    // Expand environment variables (e.g. %APPDATA% -> C:\Users\...\AppData\Roaming)
+    WCHAR szExpanded[MAXPATHLEN];
+    if (!ExpandEnvironmentStringsW(pszPath, szExpanded, COUNTOF(szExpanded)))
+        return;
+    pszPath = szExpanded;
+
     HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
 
     // Determine the drive from the path
