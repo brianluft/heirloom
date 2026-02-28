@@ -40,8 +40,6 @@ DWORD cNodes;
 
 void GetTreePathIndirect(PDNODE pNode, LPWSTR szDest);
 
-void ScanDirLevel(PDNODE pParentNode, LPWSTR szPath, DWORD view);
-
 int InsertDirectory(
     HWND hwndTreeCtl,
     PDNODE pParentNode,
@@ -162,49 +160,6 @@ void SetNodeAttribs(PDNODE pNode, LPWSTR szPath) {
                 break;
         }
     }
-}
-
-/*--------------------------------------------------------------------------*/
-/*                                                                          */
-/*  ScanDirLevel() -                                                        */
-/*                                                                          */
-/*  look down to see if this node has any sub directories                   */
-/*                                                                          */
-/*--------------------------------------------------------------------------*/
-
-void ScanDirLevel(PDNODE pParentNode, LPWSTR szPath, DWORD view) {
-    BOOL bFound;
-    BOOL bExclude;
-
-    LFNDTA lfndta{};
-    lfndta.hFindFile = INVALID_HANDLE_VALUE;
-
-    /* Add '*.*' to the current path. */
-    lstrcpy(szMessage, szPath);
-    AddBackslash(szMessage);
-    lstrcat(szMessage, kStarDotStar);
-
-    /* Search for the first subdirectory on this level. */
-
-    bFound = WFFindFirst(&lfndta, szMessage, ATTR_DIR | view);
-
-    while (bFound) {
-        /* Is this a junction and are those displayed? */
-        bExclude = FALSE;
-        if ((view & ATTR_JUNCTION) == 0 && (lfndta.fd.dwFileAttributes & ATTR_JUNCTION)) {
-            bExclude = TRUE;
-        }
-
-        /* Is this not a '.' or '..' directory? */
-        if (!ISDOTDIR(lfndta.fd.cFileName) && (lfndta.fd.dwFileAttributes & ATTR_DIR) && !bExclude) {
-            pParentNode->wFlags |= TF_HASCHILDREN;
-            bFound = FALSE;
-        } else
-            /* Search for the next subdirectory. */
-            bFound = WFFindNext(&lfndta);
-    }
-
-    WFFindClose(&lfndta);
 }
 
 // wizzy cool recursive path compare routine
@@ -433,36 +388,6 @@ void wfYield() {
             DispatchMessage(&msg);
         }
     }
-}
-
-/////////////////////////////////////////////////////////////////////
-//
-// Name:     WFFindNextNonJunction
-//
-// Synopsis: Returns the next non-junction entry, which may be the
-//           current entry.  Continually calls WFFindNext so long as
-//           the current entry is a junction.
-//
-// lpFind               Pointer to the find context, which may (or may
-//                      not) be advanced to a later entry.
-//
-// Return:              TRUE  = non-junction successfully found
-//                      FALSE = no non-junction remaining.
-BOOL WFFindNextNonJunction(LPLFNDTA lpFind) {
-    BOOL bFound;
-
-    bFound = TRUE;
-
-    while (bFound) {
-        // If it's not a junction, return it.
-        if (!(lpFind->fd.dwFileAttributes & ATTR_JUNCTION)) {
-            return bFound;
-        }
-
-        bFound = WFFindNext(lpFind);
-    }
-
-    return bFound;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -759,13 +684,6 @@ BOOL ReadDirLevel(
             }
         } else {
             bFound = WFFindNext(&lfndta);  // get it from dos
-
-            //
-            // if junctions are not displayed, continue to the next non-junction
-            //
-            if (bFound && !(dwAttribs & ATTR_JUNCTION)) {
-                bFound = WFFindNextNonJunction(&lfndta);
-            }
         }
     }
 
