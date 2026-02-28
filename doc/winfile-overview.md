@@ -174,6 +174,7 @@ Frame Window (FrameWndProc) - hwndFrame
 ### User Interface Features
 - **Dual-Pane View** - Resizable split between tree and file listing
 - **Multiple Windows** - MDI interface supporting up to 27 concurrent windows
+- **Window List** - The Window menu shows a numbered list of all MDI child windows, allowing direct activation by name. The MDI client automatically manages this list via `CLIENTCREATESTRUCT.hWindowMenu`. When a minimized (hidden) window is selected from the list, custom `WM_COMMAND` handling in `FrameWndProc` restores it from the minimized bar before activation.
 - **Window Minimization** - Minimized MDI children appear as icons in a bottom bar (simulating Windows 3.11 behavior), double-click to restore
 - **Customizable Views** - List and Details modes with globally-configurable columns (View > Select Columns) and per-window sorting; all files are always shown (no file type filtering). Column changes are broadcast to all open windows immediately via `ApplyColumnsToAllWindows()`.
 - **Toolbar** - Standard toolbar with location combobox, view/sort radio buttons, and new window button

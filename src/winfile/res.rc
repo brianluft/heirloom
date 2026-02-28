@@ -247,7 +247,6 @@ BEGIN
     MENUITEM    "Tile &horizontally",               IDM_TILEHORIZONTALLY
     MENUITEM    "&Tile vertically\tShift+F4",       IDM_TILE
     MENUITEM    "&Refresh\tF5",                     IDM_REFRESH
-    MENUITEM    SEPARATOR
     MENUITEM    "&Back\tAlt+Left",                  IDM_HISTORYBACK
     MENUITEM    "&Forward\tAlt+Right",              IDM_HISTORYFWD
     END

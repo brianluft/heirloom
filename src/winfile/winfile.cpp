@@ -389,6 +389,54 @@ BOOL InitPopupMenu(const std::wstring& popupName, HMENU hMenu, HWND hwndActive) 
     return TRUE;
 }
 
+// Find the MDI child window corresponding to a Window menu command ID.
+// The MDI client adds numbered entries like "&1 FolderName" to the Window menu,
+// with IDs starting at IDM_CHILDSTART. This function finds the matching HWND
+// by looking up the menu text and comparing it to MDI child window titles.
+static HWND FindMDIChildByMenuCommand(UINT cmdId) {
+    HMENU hMainMenu = GetMenu(hwndFrame);
+    if (!hMainMenu)
+        return NULL;
+
+    // Find the Window menu by name
+    HMENU hWindowMenu = NULL;
+    int menuCount = GetMenuItemCount(hMainMenu);
+    WCHAR buf[128];
+    for (int i = 0; i < menuCount; i++) {
+        if (GetMenuStringW(hMainMenu, i, buf, ARRAYSIZE(buf), MF_BYPOSITION) && wcscmp(buf, L"&Window") == 0) {
+            hWindowMenu = GetSubMenu(hMainMenu, i);
+            break;
+        }
+    }
+    if (!hWindowMenu)
+        return NULL;
+
+    // Find the menu item text for this command ID
+    WCHAR menuText[MAXPATHLEN];
+    if (!GetMenuStringW(hWindowMenu, cmdId, menuText, ARRAYSIZE(menuText), MF_BYCOMMAND))
+        return NULL;
+
+    // Strip the "&N " prefix added by the MDI client (e.g., "&1 Documents" -> "Documents")
+    LPWSTR windowTitle = menuText;
+    LPWSTR space = wcschr(menuText, L' ');
+    if (space)
+        windowTitle = space + 1;
+
+    // Walk MDI children to find the one with matching window text
+    for (HWND hwndChild = GetWindow(hwndMDIClient, GW_CHILD); hwndChild;
+         hwndChild = GetWindow(hwndChild, GW_HWNDNEXT)) {
+        if (GetWindow(hwndChild, GW_OWNER))
+            continue;  // skip owned (title-bar) windows
+
+        WCHAR childTitle[MAXPATHLEN];
+        GetWindowTextW(hwndChild, childTitle, ARRAYSIZE(childTitle));
+        if (wcscmp(childTitle, windowTitle) == 0)
+            return hwndChild;
+    }
+
+    return NULL;
+}
+
 LRESULT
 CALLBACK
 FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
@@ -556,10 +604,19 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
             hMenu2 = GetMenu(hwnd);
 
-            // the extensions haven't been loaded yet so the window
-            // menu is in the position of the first extensions menu
-
-            ccs.hWindowMenu = (HWND)GetSubMenu(hMenu2, IDM_EXTENSIONS);
+            // Find the "&Window" menu by name so the MDI client can
+            // append child window entries to it.
+            ccs.hWindowMenu = NULL;
+            {
+                int menuCount = GetMenuItemCount(hMenu2);
+                WCHAR buf[128];
+                for (int i = 0; i < menuCount; i++) {
+                    if (GetMenuStringW(hMenu2, i, buf, ARRAYSIZE(buf), MF_BYPOSITION) && wcscmp(buf, L"&Window") == 0) {
+                        ccs.hWindowMenu = GetSubMenu(hMenu2, i);
+                        break;
+                    }
+                }
+            }
             ccs.idFirstChild = IDM_CHILDSTART;
 
             // create the MDI client at approximate size to make sure
@@ -619,10 +676,10 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
             {
                 HMENU hMainMenu = GetMenu(hwnd);
                 int count = GetMenuItemCount(hMainMenu);
-                TCHAR buf[128];
+                WCHAR buf[128];
                 for (int i = 0; i < count; ++i) {
                     if (GetSubMenu(hMainMenu, i) == hPopup) {
-                        if (GetMenuString(hMainMenu, i, buf, ARRAYSIZE(buf), MF_BYPOSITION)) {
+                        if (GetMenuStringW(hMainMenu, i, buf, ARRAYSIZE(buf), MF_BYPOSITION)) {
                             // buf now contains something like "&File"
                             popupName = buf;
                         }
@@ -776,16 +833,41 @@ FrameWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam) {
 
             /*** FALL THROUGH to WM_COMMAND ***/
 
-        case WM_COMMAND:
-            if (AppCommandProc(GET_WM_COMMAND_ID(wParam, lParam)))
+        case WM_COMMAND: {
+            UINT cmdId = GET_WM_COMMAND_ID(wParam, lParam);
+
+            // Handle activation of minimized (hidden) MDI child windows from
+            // the Window menu. When a window is minimized to the bar, it's
+            // hidden via ShowWindow(SW_HIDE). DefFrameProc can't properly
+            // activate hidden windows, so we restore them here first.
+            if (cmdId >= IDM_CHILDSTART && cmdId < IDM_HELPINDEX) {
+                HWND hwndTarget = FindMDIChildByMenuCommand(cmdId);
+                if (hwndTarget && !IsWindowVisible(hwndTarget)) {
+                    HWND hwndActive = (HWND)SendMessage(hwndMDIClient, WM_MDIGETACTIVE, 0, 0L);
+                    BOOL wasMaximized = hwndActive && (GetWindowLongPtr(hwndActive, GWL_STYLE) & WS_MAXIMIZE);
+
+                    MinBarRemoveWindow(hwndTarget);
+                    ShowWindow(hwndTarget, SW_SHOW);
+                    SendMessage(hwndMDIClient, WM_MDIACTIVATE, (WPARAM)hwndTarget, 0);
+
+                    if (wasMaximized)
+                        SendMessage(hwndMDIClient, WM_MDIMAXIMIZE, (WPARAM)hwndTarget, 0);
+
+                    break;
+                }
+                // Visible windows: fall through to DefFrameProc
+            }
+
+            if (AppCommandProc(cmdId))
                 break;
-            if (GET_WM_COMMAND_ID(wParam, lParam) == IDM_EXIT) {
+            if (cmdId == IDM_EXIT) {
                 FreeExtensions();
 
                 DestroyWindow(hwnd);
                 break;
             }
             /*** FALL THROUGH ***/
+        }
 
         case WM_NCPAINT:
         case WM_NCACTIVATE: {
