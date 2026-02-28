@@ -88,6 +88,7 @@ BEGIN
 	"E",        IDM_STARTEXPLORER, VIRTKEY, CONTROL, NOINVERT
 	"X",        IDM_CUTTOCLIPBOARD, VIRTKEY, CONTROL, NOINVERT
 	"C",        IDM_COPYTOCLIPBOARD, VIRTKEY, CONTROL, NOINVERT
+	"C",        IDM_COPYASPATH, VIRTKEY, SHIFT, CONTROL, NOINVERT
 	"V",        IDM_PASTE, VIRTKEY, CONTROL, NOINVERT
 	"B",        IDM_STARTBASHSHELL, VIRTKEY, CONTROL, NOINVERT
 	"K",        IDM_STARTCMDSHELL, VIRTKEY, CONTROL, NOINVERT
@@ -205,6 +206,7 @@ BEGIN
     BEGIN
     MENUITEM    "Cu&t\tCtrl+X",     IDM_CUTTOCLIPBOARD
     MENUITEM    "&Copy\tCtrl+C",    IDM_COPYTOCLIPBOARD
+    MENUITEM    "Copy as &path\tCtrl+Shift+C", IDM_COPYASPATH
     MENUITEM    "&Paste\tCtrl+V",   IDM_PASTE
     END
     POPUP       "&View"
@@ -282,6 +284,7 @@ BEGIN
     END
     MENUITEM    SEPARATOR
     MENUITEM    "&Copy\tCtrl+C",    IDM_COPYTOCLIPBOARD
+    MENUITEM    "Copy as p&ath\tCtrl+Shift+C", IDM_COPYASPATH
     MENUITEM    "Cu&t\tCtrl+X",     IDM_CUTTOCLIPBOARD
     MENUITEM    "&Paste\tCtrl+V",   IDM_PASTE
     MENUITEM    SEPARATOR
@@ -611,6 +614,7 @@ BEGIN
     MH_MYITEMS+IDM_MOVE,        "Moves selected item"
     MH_MYITEMS+IDM_COPY,        "Copies files and folders"
     MH_MYITEMS+IDM_COPYTOCLIPBOARD, "Copies one or more files to the clipboard"
+    MH_MYITEMS+IDM_COPYASPATH, "Copies file paths to the clipboard as text"
     MH_MYITEMS+IDM_CUTTOCLIPBOARD, "Cuts one or more files to the clipboard"
     MH_MYITEMS+IDM_PASTE,       "Paste file from clipboard to current folder"
     MH_MYITEMS+IDM_DELETE,      "Deletes files and folders"

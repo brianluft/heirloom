@@ -77,6 +77,7 @@
 #define IDM_HARDLINK 133
 
 #define IDM_STARTEXPLORER 134
+#define IDM_COPYASPATH 140
 
 // ZIP Archive commands
 #define IDM_ZIPARCHIVE_ADDTOZIP 135

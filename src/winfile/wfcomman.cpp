@@ -1643,6 +1643,43 @@ BOOL AppCommandProc(DWORD id) {
             UpdateMoveStatus(id == IDM_CUTTOCLIPBOARD ? DROPEFFECT_MOVE : DROPEFFECT_COPY);
         } break;
 
+        case IDM_COPYASPATH: {
+            LPWSTR pszFiles = GetSelection(4, NULL);
+            if (pszFiles == NULL)
+                break;
+
+            std::wstring text;
+            WCHAR szPath[MAXPATHLEN];
+            LPWSTR p = pszFiles;
+            while ((p = GetNextFile(p, szPath, COUNTOF(szPath))) != NULL) {
+                if (!text.empty())
+                    text += L"\r\n";
+                text += L'"';
+                text += szPath;
+                text += L'"';
+            }
+
+            LocalFree((HANDLE)pszFiles);
+
+            if (text.empty())
+                break;
+
+            HANDLE hMem = GlobalAlloc(GMEM_MOVEABLE, (text.size() + 1) * sizeof(WCHAR));
+            if (hMem) {
+                LPWSTR pMem = (LPWSTR)GlobalLock(hMem);
+                lstrcpy(pMem, text.c_str());
+                GlobalUnlock(hMem);
+
+                if (OpenClipboard(hwndFrame)) {
+                    EmptyClipboard();
+                    SetClipboardData(CF_UNICODETEXT, hMem);
+                    CloseClipboard();
+                } else {
+                    GlobalFree(hMem);
+                }
+            }
+        } break;
+
         case IDM_ATTRIBS: {
             LPWSTR pSel, p;
             int count;
