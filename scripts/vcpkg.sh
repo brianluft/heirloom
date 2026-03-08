@@ -10,7 +10,7 @@ if [ ! -f "$VSWHERE" ]; then
 fi
 
 # Use vswhere to locate the VS installation path, e.g. "C:\Program Files\Microsoft Visual Studio\2022\Community"
-VSPATH=$("$VSWHERE" -all -property installationPath)
+VSPATH=$("$VSWHERE" -version "[17.0,18.0)" -latest -requires Microsoft.Component.MSBuild -property installationPath)
 if [ -z "$VSPATH" ]; then
     echo "Could not find VS installation path!"
     exit 1
@@ -19,7 +19,7 @@ fi
 # Locate vcpkg
 VCPKG="$VSPATH\VC\vcpkg\vcpkg.exe"
 if [ ! -f "$VCPKG" ]; then
-    echo "Could not find vcpkg.exe!"
+    echo "Could not find vcpkg.exe at $VCPKG!"
     exit 1
 fi
 
