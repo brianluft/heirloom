@@ -1,23 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
-   width="23"
-   height="23"
-   viewBox="0 0 23 23"
+   width="16"
+   height="16"
+   viewBox="0 0 16 16"
    version="1.1"
-   id="svg1"
-   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   id="svg12"
    sodipodi:docname="drive_00.svg"
-   xml:space="preserve"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
    inkscape:export-filename="drive_00.png"
-   inkscape:export-xdpi="1068.5217"
-   inkscape:export-ydpi="1068.5217"
+   inkscape:export-xdpi="1536"
+   inkscape:export-ydpi="1536"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
-     id="namedview1"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview12"
      pagecolor="#ffffff"
      bordercolor="#000000"
      borderopacity="0.25"
@@ -25,85 +23,223 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="px"
-     inkscape:zoom="5.6568543"
-     inkscape:cx="33.322407"
-     inkscape:cy="1.2374369"
+     inkscape:zoom="50.5"
+     inkscape:cx="7.990099"
+     inkscape:cy="8"
      inkscape:window-width="1920"
      inkscape:window-height="1010"
      inkscape:window-x="-6"
      inkscape:window-y="-6"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1"
-     showgrid="true"><inkscape:grid
-       id="grid1"
+     inkscape:current-layer="svg12"
+     showgrid="true">
+    <inkscape:grid
+       id="grid24"
        units="px"
        originx="0"
        originy="0"
-       spacingx="0.5"
-       spacingy="0.5"
+       spacingx="1"
+       spacingy="1"
        empcolor="#0099e5"
-       empopacity="0.60392157"
+       empopacity="0.30196078"
        color="#0099e5"
        opacity="0.14901961"
-       empspacing="2"
-       dotted="false"
-       gridanglex="30"
-       gridanglez="30"
-       visible="true" /></sodipodi:namedview><defs
-     id="defs1"><linearGradient
-       id="swatch22"
-       inkscape:swatch="solid"><stop
-         style="stop-color:#00ffff;stop-opacity:1;"
-         offset="0"
-         id="stop23" /></linearGradient></defs><g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"><rect
-       style="fill:#cccccc;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
-       id="rect32"
-       width="19"
-       height="10"
-       x="2"
-       y="7" /><path
-       style="fill:none;stroke:#000000;stroke-opacity:1"
-       d="m 0.5,5.5 v 13 h 22 v -13 z"
-       id="path1" /><path
-       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
-       d="m 3.5,10 h 16"
-       id="path29" /><path
-       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
-       id="path28"
-       sodipodi:type="arc"
-       sodipodi:cx="11.5"
-       sodipodi:cy="10.125"
-       sodipodi:rx="5.5"
-       sodipodi:ry="3.5332148"
-       sodipodi:start="0"
-       sodipodi:end="3.1415927"
-       sodipodi:open="true"
-       sodipodi:arc-type="arc"
-       d="m 17,10.125 a 5.5,3.5332148 0 0 1 -2.75,3.059854 5.5,3.5332148 0 0 1 -5.5000001,0 A 5.5,3.5332148 0 0 1 6,10.125" /><path
-       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-opacity:1"
-       id="path28-6"
-       sodipodi:type="arc"
-       sodipodi:cx="11.5"
-       sodipodi:cy="10.105858"
-       sodipodi:rx="1.1"
-       sodipodi:ry="0.70664299"
-       sodipodi:start="0"
-       sodipodi:end="3.1415927"
-       sodipodi:open="true"
-       sodipodi:arc-type="arc"
-       d="m 12.6,10.105858 a 1.1,0.70664299 0 0 1 -0.55,0.611971 1.1,0.70664299 0 0 1 -1.1,0 1.1,0.70664299 0 0 1 -0.55,-0.611971" /><path
-       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
-       d="m 17,15.5 h 3"
-       id="path30" /><path
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
-       d="M 1,18 2,17 V 7 H 21 L 22,6 H 1 Z"
-       id="path31"
-       sodipodi:nodetypes="ccccccc" /><path
-       style="fill:#999999;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1"
-       d="M 1,18 2,17 H 21 V 7 l 1,-1 v 12 z"
-       id="path32"
-       sodipodi:nodetypes="ccccccc" /></g></svg>
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath12">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle13" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath13">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle14" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath14">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle15" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath15">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle16" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath16">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle17" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath17">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle18" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath18">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle19" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath19">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle20" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath20">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle21" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath21">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle22" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath22">
+      <circle
+         cx="8"
+         cy="8"
+         r="6.5"
+         id="circle23" />
+    </clipPath>
+  </defs>
+  <path
+     d="M 1.5,8 A 6.5,6.5 0 1,1 14.5,8 A 6.5,6.5 0 1,1 1.5,8 Z M 6.0,8 A 2.0,2.0 0 1,0 10.0,8 A 2.0,2.0 0 1,0 6.0,8 Z"
+     fill="#D8D8D8"
+     stroke="#000000"
+     stroke-width="1"
+     fill-rule="evenodd"
+     id="path1" />
+  <!-- CD disc body - light gray annulus with transparent center -->
+  <!-- Rainbow reflection arcs - clipped to disc -->
+  <g
+     id="g23"
+     transform="matrix(0.78615572,0,0,0.78615572,2.3602421,1.0612664)">
+    <path
+       d="M 13.63,4.75 A 6.5,6.5 0 0 0 13.26,4.18 L 9.62,6.82 A 2,2 0 0 1 9.73,7 Z"
+       fill="#ff0000"
+       opacity="0.5"
+       id="path2"
+       clip-path="url(#clipPath22)" />
+    <path
+       d="M 13.26,4.18 A 6.5,6.5 0 0 0 12.83,3.65 L 9.49,6.66 a 2,2 0 0 1 0.13,0.16 z"
+       fill="#ffff00"
+       opacity="0.5"
+       id="path3"
+       clip-path="url(#clipPath21)" />
+    <path
+       d="M 12.83,3.65 A 6.5,6.5 0 0 0 12.35,3.17 L 9.34,6.51 a 2,2 0 0 1 0.15,0.15 z"
+       fill="#00ff00"
+       opacity="0.5"
+       id="path4"
+       clip-path="url(#clipPath20)" />
+    <path
+       d="M 12.35,3.17 A 6.5,6.5 0 0 0 11.82,2.74 L 9.18,6.38 a 2,2 0 0 1 0.16,0.13 z"
+       fill="#0000ff"
+       opacity="0.5"
+       id="path5"
+       clip-path="url(#clipPath19)" />
+    <path
+       d="M 11.82,2.74 A 6.5,6.5 0 0 0 11.25,2.37 L 9,6.27 a 2,2 0 0 1 0.18,0.11 z"
+       fill="#ff00ff"
+       opacity="0.5"
+       id="path6"
+       clip-path="url(#clipPath18)" />
+  </g>
+  <g
+     id="g24"
+     transform="matrix(0.78615571,0,0,0.78615571,1.0612664,2.3602421)">
+    <path
+       d="m 2.37,11.25 a 6.5,6.5 0 0 0 0.37,0.57 L 6.38,9.18 A 2,2 0 0 1 6.27,9 Z"
+       fill="#ff00ff"
+       opacity="0.5"
+       id="path7"
+       clip-path="url(#clipPath17)" />
+    <path
+       d="m 2.74,11.82 a 6.5,6.5 0 0 0 0.43,0.53 L 6.51,9.34 A 2,2 0 0 1 6.38,9.18 Z"
+       fill="#0000ff"
+       opacity="0.5"
+       id="path8"
+       clip-path="url(#clipPath16)" />
+    <path
+       d="m 3.17,12.35 a 6.5,6.5 0 0 0 0.48,0.48 L 6.66,9.49 A 2,2 0 0 1 6.51,9.34 Z"
+       fill="#00ff00"
+       opacity="0.5"
+       id="path9"
+       clip-path="url(#clipPath15)" />
+    <path
+       d="m 3.65,12.83 a 6.5,6.5 0 0 0 0.53,0.43 L 6.82,9.62 A 2,2 0 0 1 6.66,9.49 Z"
+       fill="#ffff00"
+       opacity="0.5"
+       id="path10"
+       clip-path="url(#clipPath14)" />
+    <path
+       d="m 4.18,13.26 a 6.5,6.5 0 0 0 0.57,0.37 L 7,9.73 A 2,2 0 0 1 6.82,9.62 Z"
+       fill="#ff0000"
+       opacity="0.5"
+       id="path11"
+       clip-path="url(#clipPath13)" />
+  </g>
+  <path
+     d="M 5.25,3.24 A 5.5,5.5 0 0 0 3.02,5.68 L 5.28,6.73 A 3,3 0 0 1 6.5,5.4 Z"
+     fill="#ffffff"
+     opacity="0.6"
+     id="path12"
+     clip-path="url(#clipPath12)" />
+  <circle
+     cx="8"
+     cy="8"
+     r="2.0"
+     fill="none"
+     stroke="#000000"
+     stroke-width="0.7"
+     id="circle12" />
+  <!-- Center hole outline -->
+</svg>
