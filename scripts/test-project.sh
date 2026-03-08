@@ -19,7 +19,7 @@ if [ ! -f "$VSWHERE" ]; then
     exit 1
 fi
 
-VSPATH=$("$VSWHERE" -all -property installationPath)
+VSPATH=$("$VSWHERE" -version "[17.0,18.0)" -latest -requires Microsoft.Component.MSBuild -property installationPath)
 
 if [[ "$PLATFORM" == "ARM64" ]]; then
     VSTEST="$VSPATH\\Common7\\IDE\\Extensions\\TestPlatform\\vstest.console.arm64.exe"

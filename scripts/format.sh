@@ -7,7 +7,7 @@ if [ ! -f "$VSWHERE" ]; then
     exit 1
 fi
 
-VSPATH=$("$VSWHERE" -all -property installationPath)
+VSPATH=$("$VSWHERE" -version "[17.0,18.0)" -latest -requires Microsoft.Component.MSBuild -property installationPath)
 CLANG_FORMAT="$VSPATH\\VC\\Tools\\Llvm\\bin\\clang-format.exe"
 if [ ! -f "$CLANG_FORMAT" ]; then
     echo "Could not find clang-format.exe!"
